@@ -1,14 +1,19 @@
 
-@import '~@enact/ui/styles/mixins';
+@import "~@enact/ui/styles/mixins";
 
 .app {
 	// styles can be put here
 	.position(0);
 	position: absolute;
 
+	:global(.moonstone) {
+		font-family: "Open Sans", "MuseoSans", "Museo Sans", sans-serif;
+	}
+
 	.controls {
 		background-color: gray;
 		color: orange;
 		padding: 18px;
+		z-index: 1;
 	}
 }

@@ -42,6 +42,8 @@
 
 	.eye {
 		height: 70%;
+		transition: 1s transform;
+		will-change: transform;
 
 		.lid {
 			background-color: darkgray;
@@ -97,6 +99,12 @@
 		}
 	}
 
+	&.concerned {
+		.eye {
+			transform: scale(1.3);
+		}
+	}
+
 	&.confused {
 		.left .eye {
 			.lid.upper {
@@ -125,7 +133,7 @@
 				transform: translate(-50%, -50%) rotate(-5deg);
 			}
 			.ball {
-				background-color: lightcyan;
+				background-color: skyblue;
 			}
 		}
 	}
