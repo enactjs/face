@@ -1,0 +1,142 @@
+// Face.less
+//
+
+// & {
+@keyframes twitch {
+	10%, 30%, 60%, 90% {
+		transform: translate(-50%, -50%) rotate(-8deg);
+	}
+	13%, 40%, 65%, 98% {
+		transform: translate(-50%, -40%) rotate(-8deg);
+	}
+}
+@keyframes bob {
+	0%, 50%, 100% {
+		transform: translate(0%, 0%) rotate(0deg);
+	}
+	25% {
+		transform: translate(-10%, -10%) rotate(-5deg);
+	}
+	75% {
+		transform: translate(10%, -10%) rotate(5deg);
+	}
+}
+// }
+
+.face {
+	width: 600px;
+	height: 600px;
+	justify-content: space-between;
+	will-change: transform;
+
+	.eyeSocket {
+		// width: 40%;
+
+		&.left {
+			// placeholder
+		}
+		&.right {
+			transform: scaleX(-1);
+		}
+	}
+
+	.eye {
+		height: 70%;
+
+		.lid {
+			background-color: darkgray;
+			// opacity: 0.9;
+			// background-image: linear-gradient(to bottom, transparent, gray);
+			height: 180px;
+			width: 160%;
+			position: absolute;
+			left: 50%;
+
+			&.upper {
+				top: 0;
+				transform: translate(-50%, -100%) rotate(0deg);
+				transform-origin: 50% 30%;
+				transition: 300ms transform;
+				// outline: dashed blue;
+				will-change: transform;
+			}
+			&.lower {
+				transform: translate(-50%, 10%) rotate(0deg);
+				transform-origin: 50% 30%;
+				transition: 300ms transform;
+				// outline: dashed orange;
+				will-change: transform;
+			}
+		}
+
+		.ball {
+			height: 100%;
+			width: 80%;
+			background-color: white;
+			border-radius: 999px;
+			margin-left: auto;
+			margin-right: auto;
+			transition: 800ms background-color ease-in-out;
+			will-change: background-color;
+		}
+	}
+
+	&.angry {
+		.eye {
+			.lid.upper {
+				transform: translate(-50%, -10%) rotate(8deg);
+			}
+		}
+	}
+
+	&.attackMode {
+		.eye {
+			.ball {
+				background-color: #b22;
+			}
+		}
+	}
+
+	&.confused {
+		.left .eye {
+			.lid.upper {
+				transform: translate(-50%, -20%) rotate(10deg);
+			}
+			.lid.lower {
+				transform: translate(-50%, -50%) rotate(-8deg);
+			}
+		}
+	}
+
+	&.happy {
+		animation: 1s none ease-in-out infinite;
+		animation-name: bob;
+
+		.eye {
+			.lid.lower {
+				transform: translate(-50%, -90%) rotate(8deg);
+			}
+		}
+	}
+
+	&.sad {
+		.eye {
+			.lid.upper {
+				transform: translate(-50%, -50%) rotate(-5deg);
+			}
+			.ball {
+				background-color: lightcyan;
+			}
+		}
+	}
+
+	&.vexed {
+		.right .eye {
+			.lid.lower {
+				transform: translate(-50%, -50%) rotate(-8deg);
+				animation: 0.5s none linear infinite;
+				animation-name: twitch;
+			}
+		}
+	}
+}
