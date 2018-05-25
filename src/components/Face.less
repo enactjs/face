@@ -10,6 +10,17 @@
 		transform: translate(-50%, -40%) rotate(-8deg);
 	}
 }
+@keyframes no {
+	0%, 70% {
+		transform: translate(0, 0);
+	}
+	10%, 30%, 50% {
+		transform: translate(-10%, 0);
+	}
+	20%, 40%, 60% {
+		transform: translate(10%, 0);
+	}
+}
 @keyframes bob {
 	0%, 50%, 100% {
 		transform: translate(0%, 0%) rotate(0deg);
@@ -24,8 +35,8 @@
 // }
 
 .face {
-	width: 600px;
-	height: 600px;
+	width: 798px;
+	height: 551px;
 	justify-content: space-between;
 	will-change: transform;
 
@@ -108,10 +119,10 @@
 	&.confused {
 		.left .eye {
 			.lid.upper {
-				transform: translate(-50%, -20%) rotate(10deg);
+				transform: translate(-50%, -60%) rotate(10deg);
 			}
 			.lid.lower {
-				transform: translate(-50%, -50%) rotate(-8deg);
+				transform: translate(-50%, -40%) rotate(-8deg);
 			}
 		}
 	}
@@ -125,6 +136,11 @@
 				transform: translate(-50%, -90%) rotate(8deg);
 			}
 		}
+	}
+
+	&.no {
+		animation: 2s none ease-in-out infinite;
+		animation-name: no;
 	}
 
 	&.sad {

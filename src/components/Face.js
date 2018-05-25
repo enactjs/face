@@ -37,8 +37,8 @@ const Face = kind({
 		delete rest.expression;
 		return (
 			<Layout {...rest}>
-				<Cell size="40%" className={styler.join('eyeSocket', 'left')}><Eye/></Cell>
-				<Cell size="40%" className={styler.join('eyeSocket', 'right')}><Eye/></Cell>
+				<Cell size="25%" className={styler.join('eyeSocket', 'left')}><Eye/></Cell>
+				<Cell size="25%" className={styler.join('eyeSocket', 'right')}><Eye/></Cell>
 			</Layout>
 		);
 	}

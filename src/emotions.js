@@ -4,6 +4,7 @@ export default {
 	concerned: 'Concerned',
 	confused: 'Confused',
 	happy: 'Happy',
+	no: 'Nope!',
 	sad: 'Sad',
 	vexed: 'Vexed'
 };
