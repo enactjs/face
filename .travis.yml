@@ -6,7 +6,6 @@ cache:
     - ~/.npm
 sudo: false
 install:
-    - npm 
     - npm install -g enactjs/cli#develop
     - npm install
 script:
