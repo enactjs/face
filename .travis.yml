@@ -3,9 +3,7 @@ node_js:
     - "node"
 cache:
   directories:
-    - node_modules
-    - $(npm config get prefix)/bin/enact
-    - $(npm config get prefix)/lib/node_modules
+    - ~/.npm
 sudo: false
 install:
     - npm 
