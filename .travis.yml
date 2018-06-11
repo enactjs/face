@@ -3,9 +3,10 @@ node_js:
     - "node"
 cache:
   directories:
-    - ~/.npm
+    - ~/npm_cache
 sudo: false
 install:
+    - npm config set prefer-offline true
     - npm install -g enactjs/cli#develop
     - npm install
 script:
