@@ -1,8 +1,9 @@
+/* eslint no-console: off */
 import ROSLIB from 'roslib';
 
-function noop() {}
+function noop () {}
 
-function connect({url, onConnection, onMessage, onError, onClose} = {}) {
+function connect ({url, onConnection, onMessage, onError, onClose} = {}) {
 	if (!url) throw new Error('Bot roslib url required for usage.');
 
 	const ros = new ROSLIB.Ros({url});

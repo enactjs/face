@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import kind from '@enact/core/kind';
 import {Layout, Cell} from '@enact/ui/Layout';
@@ -12,6 +13,7 @@ const Eye = kind({
 		className: 'eye'
 	},
 
+	// eslint-disable-next-line
 	render: ({styler, ...rest}) => (
 		<div {...rest}>
 			<div className={styler.join('lid', 'upper')} />
@@ -24,6 +26,10 @@ const Eye = kind({
 const Face = kind({
 	name: 'Face',
 
+	propTypes: {
+		expression: PropTypes.object
+	},
+
 	styles: {
 		css,
 		className: 'face'
@@ -33,12 +39,13 @@ const Face = kind({
 		className: ({expression, styler}) => styler.append(expression)
 	},
 
+	// eslint-disable-next-line
 	render: ({styler, ...rest}) => {
 		delete rest.expression;
 		return (
 			<Layout {...rest}>
-				<Cell size="25%" className={styler.join('eyeSocket', 'left')}><Eye/></Cell>
-				<Cell size="25%" className={styler.join('eyeSocket', 'right')}><Eye/></Cell>
+				<Cell size="25%" className={styler.join('eyeSocket', 'left')}><Eye /></Cell>
+				<Cell size="25%" className={styler.join('eyeSocket', 'right')}><Eye /></Cell>
 			</Layout>
 		);
 	}

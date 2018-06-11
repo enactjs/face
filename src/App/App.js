@@ -15,7 +15,7 @@ import Head from '../views/Head';
 
 import css from './App.less';
 
-const makeTogglerName = (em) => 'toggle' + toCapitalized(em)
+const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
 const togglePropTypes = {};
 for (const em in emotions) {
@@ -83,6 +83,15 @@ const Brain = hoc((config, Wrapped) => {
 			this.state = state;
 		}
 
+		componentDidMount () {
+			if (!this.bot) {
+				this.bot = connect({
+					url: 'ws://10.194.183.51:9090',
+					onMessage: message => this.setState({label: message.label})
+				});
+			}
+		}
+
 		toggleExpression = (emotion) => () => {
 			const state = {};
 			state[emotion] = !this.state[emotion];
@@ -106,15 +115,6 @@ const Brain = hoc((config, Wrapped) => {
 					label={this.state.label}
 				/>
 			);
-		}
-
-		componentDidMount() {
-			if (!this.bot) {
-				this.bot = connect({
-					url: 'ws://10.194.183.51:9090',
-					onMessage: message => this.setState({label: message.label})
-				});
-			}
 		}
 	};
 
