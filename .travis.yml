@@ -7,6 +7,7 @@ cache:
 sudo: false
 install:
     - npm config set prefer-offline true
+    - npm set cache ~/npm_cache
     - npm install -g enactjs/cli#develop
     - npm install
 script:
