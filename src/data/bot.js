@@ -9,7 +9,7 @@ function connect ({url, onConnection, onMessage, onError, onClose} = {}) {
 	const ros = new ROSLIB.Ros({url});
 
 	ros.on('connection', onConnection || (() => console.log(`ROSLIB: Connected to ${url}`)));
-	ros.on('error', onError || (e => console.log(`ROSLIB Error: ${JSON.stringify(e)}`)));
+	ros.on('error', onError || (err => console.log(`ROSLIB Error: ${JSON.stringify(err)}`)));
 	ros.on('close', onClose || (() => console.log(`ROSLIB: Connection closed to ${url}`)));
 
 	// Subscribing to a Topic
