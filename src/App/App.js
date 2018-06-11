@@ -2,6 +2,7 @@ import kind from '@enact/core/kind';
 import hoc from '@enact/core/hoc';
 import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
+import BodyText from '@enact/moonstone/BodyText';
 import Skinnable from '@enact/moonstone/Skinnable';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
 import ToggleButton from '@enact/moonstone/ToggleButton';
@@ -9,6 +10,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 import emotions from '../emotions';
+import connect from '../data/bot';
 import Head from '../views/Head';
 
 import css from './App.less';
@@ -27,7 +29,8 @@ const App = kind({
 	name: 'App',
 
 	propTypes: {
-		...togglePropTypes
+		...togglePropTypes,
+		label: PropTypes.string
 	},
 
 	styles: {
@@ -35,7 +38,7 @@ const App = kind({
 		className: 'app'
 	},
 
-	render: ({expression, ...rest}) => {
+	render: ({expression, label, ...rest}) => {
 		const toggleButtons = [];
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
@@ -46,12 +49,15 @@ const App = kind({
 		return (
 			<Layout orientation="vertical" {...rest}>
 				<Cell shrink>
-				<MoonstoneControlsPanel className={css.controls}>
-					{toggleButtons}
-				</MoonstoneControlsPanel>
+					<MoonstoneControlsPanel className={css.controls}>
+						{toggleButtons}
+					</MoonstoneControlsPanel>
 				</Cell>
 				<Cell>
 					<Head expression={expression} />
+				</Cell>
+				<Cell shrink className={css.label}>
+					<BodyText>{label}</BodyText>
 				</Cell>
 			</Layout>
 		);
@@ -97,8 +103,18 @@ const Brain = hoc((config, Wrapped) => {
 					{...this.props}
 					{...cachedToggles}
 					expression={this.compileExpressions()}
+					label={this.state.label}
 				/>
 			);
+		}
+
+		componentDidMount() {
+			if (!this.bot) {
+				this.bot = connect({
+					uri: 'ws://10.194.183.51:9090',
+					onMessage: message => this.setState({label:message.label})
+				});
+			}
 		}
 	};
 
