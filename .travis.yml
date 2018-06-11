@@ -4,8 +4,11 @@ node_js:
 cache:
   directories:
     - node_modules
+    - $(npm config get prefix)/bin/enact
+    - $(npm config get prefix)/lib/node_modules
 sudo: false
 install:
+    - npm 
     - npm install -g enactjs/cli#develop
     - npm install
 script:
