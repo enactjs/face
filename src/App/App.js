@@ -57,7 +57,7 @@ const App = kind({
 					<Head expression={expression} />
 				</Cell>
 				<Cell shrink className={css.label}>
-					<BodyText>{label}</BodyText>
+					<BodyText centered>{label}</BodyText>
 				</Cell>
 			</Layout>
 		);
@@ -111,8 +111,8 @@ const Brain = hoc((config, Wrapped) => {
 		componentDidMount() {
 			if (!this.bot) {
 				this.bot = connect({
-					uri: 'ws://10.194.183.51:9090',
-					onMessage: message => this.setState({label:message.label})
+					url: 'ws://10.194.183.51:9090',
+					onMessage: message => this.setState({label: message.label})
 				});
 			}
 		}

@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+    - "node"
+sudo: false
+install:
+    - npm install -g enactjs/cli#develop
+    - npm install
+script:
+    - enact lint --strict
+    - npm run pack
+

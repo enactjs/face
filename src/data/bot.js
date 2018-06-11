@@ -2,16 +2,14 @@ import ROSLIB from 'roslib';
 
 function noop() {}
 
-function connect({uri, onConnection, onMessage, onError, onClose} = {}) {
-	if (!uri) throw new Error('Bot roslib URI required for usage.');
+function connect({url, onConnection, onMessage, onError, onClose} = {}) {
+	if (!url) throw new Error('Bot roslib url required for usage.');
 
-	const ros = new ROSLIB.Ros({
-		url: uri
-	});
+	const ros = new ROSLIB.Ros({url});
 
-	ros.on('connection', onConnection || (() => console.log(`ROSLIB: Connected to ${uri}`)));
+	ros.on('connection', onConnection || (() => console.log(`ROSLIB: Connected to ${url}`)));
 	ros.on('error', onError || (err => console.log(`ROSLIB Error: ${JSON.stringify(err)}`)));
-	ros.on('close', onClose || (() => console.log(`ROSLIB: Connection closed to ${uri}`)));
+	ros.on('close', onClose || (() => console.log(`ROSLIB: Connection closed to ${url}`)));
 
 	// Subscribing to a Topic
 	const listener = new ROSLIB.Topic({
