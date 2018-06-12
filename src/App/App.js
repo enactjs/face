@@ -50,7 +50,7 @@ const App = kind({
 		const toggleButtons = [];
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
-			toggleButtons.push(<ToggleButton key={em} onClick={rest[toggler]}>{emotions[em]}</ToggleButton>);
+			toggleButtons.push(<ToggleButton key={em} small onClick={rest[toggler]} style={{marginBottom: '0.3em'}}>{emotions[em]}</ToggleButton>);
 
 			delete rest[toggler];
 		}
