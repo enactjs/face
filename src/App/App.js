@@ -55,19 +55,17 @@ const App = kind({
 		}
 		return (
 			<Layout orientation="vertical" {...rest}>
-				<Cell shrink>
-					<MoonstoneControlsPanel className={css.controls}>
-						{toggleButtons}
-					</MoonstoneControlsPanel>
-				</Cell>
+				<MoonstoneControlsPanel className={css.controls} shrink>
+					{toggleButtons}
+				</MoonstoneControlsPanel>
 				<Cell>
 					<Head expression={expression} />
 				</Cell>
-				<Cell shrink className={css.label}>
+				<MoonstoneControlsPanel shrink className={css.label}>
 					<Transition visible={active} type="fade" duration={active ? 0 : 'long'}>
 						<BodyText centered>{label}</BodyText>
 					</Transition>
-				</Cell>
+				</MoonstoneControlsPanel>
 			</Layout>
 		);
 	}
