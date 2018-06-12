@@ -38,6 +38,7 @@
 		"@enact/webos": "next",
 		"prop-types": "^15",
 		"react": "^16",
-		"react-dom": "^16"
+		"react-dom": "^16",
+		"roslib": "^0.20.0"
 	}
 }

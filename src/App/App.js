@@ -1,7 +1,10 @@
 import kind from '@enact/core/kind';
 import hoc from '@enact/core/hoc';
+import {Job} from '@enact/core/util';
 import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
+import Transition from '@enact/ui/Transition';
+import BodyText from '@enact/moonstone/BodyText';
 import Skinnable from '@enact/moonstone/Skinnable';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
 import ToggleButton from '@enact/moonstone/ToggleButton';
@@ -9,11 +12,12 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 import emotions from '../emotions';
+import connect from '../data/bot';
 import Head from '../views/Head';
 
 import css from './App.less';
 
-const makeTogglerName = (em) => 'toggle' + toCapitalized(em)
+const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
 const togglePropTypes = {};
 for (const em in emotions) {
@@ -27,7 +31,14 @@ const App = kind({
 	name: 'App',
 
 	propTypes: {
-		...togglePropTypes
+		...togglePropTypes,
+		active: PropTypes.bool,
+		label: PropTypes.string
+	},
+
+	defaultProps: {
+		label: '<N/A>',
+		active: false
 	},
 
 	styles: {
@@ -35,7 +46,7 @@ const App = kind({
 		className: 'app'
 	},
 
-	render: ({expression, ...rest}) => {
+	render: ({expression, active, label, ...rest}) => {
 		const toggleButtons = [];
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
@@ -45,14 +56,17 @@ const App = kind({
 		}
 		return (
 			<Layout orientation="vertical" {...rest}>
-				<Cell shrink>
-				<MoonstoneControlsPanel className={css.controls}>
+				<MoonstoneControlsPanel className={css.controls} shrink>
 					{toggleButtons}
 				</MoonstoneControlsPanel>
-				</Cell>
 				<Cell>
 					<Head expression={expression} />
 				</Cell>
+				<MoonstoneControlsPanel shrink className={css.label}>
+					<Transition visible={active} type="fade" duration={active ? 0 : 'long'}>
+						<BodyText centered>{label}</BodyText>
+					</Transition>
+				</MoonstoneControlsPanel>
 			</Layout>
 		);
 	}
@@ -63,6 +77,16 @@ const Brain = hoc((config, Wrapped) => {
 
 	return class extends React.Component {
 		static displayName = 'Brain'
+
+		static propTypes = {
+			host: PropTypes.string,
+			activeTimeout: PropTypes.number
+		}
+
+		static defaultProps = {
+			host: '',
+			activeTimeout: 3000
+		}
 
 		constructor () {
 			super();
@@ -75,6 +99,29 @@ const Brain = hoc((config, Wrapped) => {
 			}
 
 			this.state = state;
+		}
+
+		componentDidMount () {
+			if (!this.bot) {
+				console.log('Attempting Connection to', this.props.host);
+				this.bot = connect({
+					url: 'ws://' + this.props.host,
+					onMessage: message => {
+						console.log('%cReceived:', 'color: green', message);
+						if (this.job) {
+							this.job.stop();
+						}
+						this.setState({
+							label: message.label,
+							active: true
+						});
+						this.job = new Job(() => {
+							this.setState({active: false});
+						}, this.props.activeTimeout);
+						this.job.start();
+					}
+				});
+			}
 		}
 
 		toggleExpression = (emotion) => () => {
@@ -92,11 +139,17 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		render () {
+			const {...rest} = this.props;
+			delete rest.activeTimeout;
+			delete rest.host;
+
 			return (
 				<Wrapped
-					{...this.props}
+					{...rest}
 					{...cachedToggles}
 					expression={this.compileExpressions()}
+					label={this.state.label}
+					active={this.state.active}
 				/>
 			);
 		}

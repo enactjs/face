@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+    - "node"
+cache:
+  directories:
+    - $(npm config get cache)
+sudo: false
+install:
+    - npm config set prefer-offline true
+    - npm install -g enactjs/cli#develop
+    - npm install
+    - cp -f example/config.json config.json
+script:
+    - enact lint --strict
+    - npm run pack
+
