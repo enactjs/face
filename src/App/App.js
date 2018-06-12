@@ -1,5 +1,6 @@
 import kind from '@enact/core/kind';
 import hoc from '@enact/core/hoc';
+import {Job} from '@enact/core/util';
 import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
 import Transition from '@enact/ui/Transition';
@@ -77,6 +78,16 @@ const Brain = hoc((config, Wrapped) => {
 	return class extends React.Component {
 		static displayName = 'Brain'
 
+		static propTypes = {
+			host: PropTypes.string,
+			activeTimeout: PropTypes.number
+		}
+
+		static defaultProps = {
+			host: '',
+			activeTimeout: 3000
+		}
+
 		constructor () {
 			super();
 
@@ -92,19 +103,21 @@ const Brain = hoc((config, Wrapped) => {
 
 		componentDidMount () {
 			if (!this.bot) {
+				console.log('connect attempt ' + this.props.host)
 				this.bot = connect({
-					url: 'ws://10.194.183.51:9090',
+					url: 'ws://' + this.props.host,
 					onMessage: message => {
-						if (this.timeout) {
-							clearTimeout(this.timeout)
+						if (this.job) {
+							this.job.stop();
 						}
 						this.setState({
 							label: message.label,
 							active: true
 						});
-						this.timeout = setTimeout(() => {
+						this.job = new Job(() => {
 							this.setState({active: false});
 						}, 3000);
+						this.job.start();
 					}
 				});
 			}
@@ -125,9 +138,13 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		render () {
+			const {...rest} = this.props;
+			delete rest.activeTimeout;
+			delete rest.host;
+
 			return (
 				<Wrapped
-					{...this.props}
+					{...rest}
 					{...cachedToggles}
 					expression={this.compileExpressions()}
 					label={this.state.label}

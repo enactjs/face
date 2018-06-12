@@ -15,7 +15,7 @@ function connect ({url, onConnection, onMessage, onError, onClose} = {}) {
 	// Subscribing to a Topic
 	const listener = new ROSLIB.Topic({
 		ros: ros,
-		name: '/object_classifer/output',
+		name: '/object_classifier/output',
 		messageType: 'object_classifier/classified_object'
 	});
 
