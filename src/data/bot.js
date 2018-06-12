@@ -12,11 +12,14 @@ function connect ({url, onConnection, onMessage, onError, onClose} = {}) {
 	ros.on('error', onError || (err => console.log(`ROSLIB Error: ${JSON.stringify(err)}`)));
 	ros.on('close', onClose || (() => console.log(`ROSLIB: Connection closed to ${url}`)));
 
+	// To see the topic generator:
+	// cat /usr/lib/python3.5/site-packages/object_classifier/object_classification.py
+
 	// Subscribing to a Topic
 	const listener = new ROSLIB.Topic({
 		ros: ros,
 		name: '/object_classifier/output',
-		messageType: 'object_classifier/classified_object'
+		messageType: 'duckietown_msgs/ClassifiedObject'
 	});
 
 	listener.subscribe(onMessage || noop);
