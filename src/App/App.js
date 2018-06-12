@@ -2,6 +2,7 @@ import kind from '@enact/core/kind';
 import hoc from '@enact/core/hoc';
 import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
+import Transition from '@enact/ui/Transition';
 import BodyText from '@enact/moonstone/BodyText';
 import Skinnable from '@enact/moonstone/Skinnable';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
@@ -30,7 +31,13 @@ const App = kind({
 
 	propTypes: {
 		...togglePropTypes,
+		active: PropTypes.bool,
 		label: PropTypes.string
+	},
+
+	defaultProps: {
+		label: '<N/A>',
+		active: false
 	},
 
 	styles: {
@@ -38,7 +45,7 @@ const App = kind({
 		className: 'app'
 	},
 
-	render: ({expression, label, ...rest}) => {
+	render: ({expression, active, label, ...rest}) => {
 		const toggleButtons = [];
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
@@ -57,7 +64,9 @@ const App = kind({
 					<Head expression={expression} />
 				</Cell>
 				<Cell shrink className={css.label}>
-					<BodyText centered>{label}</BodyText>
+					<Transition visible={active} type="fade" duration={active ? 0 : 'long'}>
+						<BodyText centered>{label}</BodyText>
+					</Transition>
 				</Cell>
 			</Layout>
 		);
@@ -87,7 +96,18 @@ const Brain = hoc((config, Wrapped) => {
 			if (!this.bot) {
 				this.bot = connect({
 					url: 'ws://10.194.183.51:9090',
-					onMessage: message => this.setState({label: message.label})
+					onMessage: message => {
+						if (this.timeout) {
+							clearTimeout(this.timeout)
+						}
+						this.setState({
+							label: message.label,
+							active: true
+						});
+						this.timeout = setTimeout(() => {
+							this.setState({active: false});
+						}, 3000);
+					}
 				});
 			}
 		}
@@ -113,6 +133,7 @@ const Brain = hoc((config, Wrapped) => {
 					{...cachedToggles}
 					expression={this.compileExpressions()}
 					label={this.state.label}
+					active={this.state.active}
 				/>
 			);
 		}
