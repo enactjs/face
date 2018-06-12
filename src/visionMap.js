@@ -6,15 +6,18 @@
  */
 
 export default {
-	'remote control, remote':          'confused',
-	'joystick':                        'vexed',
+	'remote control, remote':  'confused',
+	'joystick':                'vexed',
 
 	// Snakes
-	'green mamba':                     ['tremble', 'concerned'],
-	'green snake, grass snake':        ['tremble', 'concerned'],
-	'Indian cobra, Naja naja':         ['tremble', 'concerned'],
-	'hognose snake, puff adder, sand viper':  ['tremble', 'concerned'],
+	'snake':                   ['tremble', 'concerned'],
+	'mamba':                   ['tremble', 'concerned'],
+	'cobra':                   ['tremble', 'concerned'],
+	'viper':                   ['tremble', 'concerned'],
 
-	'tailed frog, bell toad, ribbed toad, tailed toad, Ascaphus trui':  'attackMode',
-	'coffee mug':                      ['happy', 'concerned']
+	// Frogs and toads
+	'toad':                    'attackMode',
+	'frog':                    'attackMode',
+
+	'coffee mug':              ['happy', 'concerned']
 };

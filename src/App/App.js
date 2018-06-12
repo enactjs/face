@@ -5,6 +5,7 @@ import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
 import Transition from '@enact/ui/Transition';
 import BodyText from '@enact/moonstone/BodyText';
+import IconButton from '@enact/moonstone/IconButton';
 import Skinnable from '@enact/moonstone/Skinnable';
 import SpotlightRootDecorator from '@enact/spotlight/SpotlightRootDecorator';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
@@ -48,6 +49,8 @@ const App = kind({
 	propTypes: {
 		...togglePropTypes,
 		active: PropTypes.bool,
+		connected: PropTypes.bool,
+		handleReconnect: PropTypes.func,
 		label: PropTypes.string
 	},
 
@@ -61,7 +64,7 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, label, ...rest}) => {
+	render: ({expression, active, connected, handleReconnect, label, styler, ...rest}) => {
 		const toggleButtons = [];
 		// console.log('expression:', expression);
 		for (const em in emotions) {
@@ -72,15 +75,18 @@ const App = kind({
 		}
 		return (
 			<Layout orientation="vertical" {...rest}>
-				<MoonstoneControlsPanel className={css.controls} shrink>
+				<MoonstoneControlsPanel shrink className={css.controls}>
 					{toggleButtons}
 				</MoonstoneControlsPanel>
 				<Cell>
 					<Head expression={expression} />
 				</Cell>
-				<MoonstoneControlsPanel shrink className={css.label}>
+				<MoonstoneControlsPanel shrink className={css.footer}>
+					<div className={styler.join(css.adminConsole, {connected})}>
+						<IconButton onTap={handleReconnect}>repeat</IconButton>
+					</div>
 					<Transition visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
-						<BodyText centered>{label}</BodyText>
+						<BodyText centered className={css.label}>{label}</BodyText>
 					</Transition>
 				</MoonstoneControlsPanel>
 			</Layout>
@@ -109,22 +115,33 @@ const Brain = hoc((config, Wrapped) => {
 
 			// Establish the base states
 			this.state = this.resetStateOfAllEmotions();
+			this.state.connected = false;
 		}
 
 		componentDidMount () {
+			this.initializeBotConnection();
+		}
+
+		initializeBotConnection () {
 			if (!this.bot) {
 				console.log('Attempting Connection to', this.props.host);
 				this.bot = connect({
 					url: 'ws://' + this.props.host,
+					onConnection: () => {
+						console.log('%cBrain attached', 'color: green');
+						this.setState({
+							connected: true
+						});
+					},
 					onMessage: message => {
-						console.log('%cReceived:', 'color: green', message);
+						console.log('%cSaw "%s" with %d\% certanty.', 'color: orange', message.label, parseInt(message.score * 100));
 						if (this.job) {
 							this.job.stop();
 						}
 
 						const state = {
-							label: message.label,
 							active: true,
+							label: message.label,
 							...this.visionIntepretation(message.label)
 						};
 						this.setState(state);
@@ -133,9 +150,27 @@ const Brain = hoc((config, Wrapped) => {
 							this.setState({active: false});
 						}, this.props.activeTimeout);
 						this.job.start();
+					},
+					onClose: () => {
+						console.log('%cBrain detached', 'color: red');
+						// Activate a reconnect button
+						this.setState({
+							connected: false
+						});
 					}
+					// onError: message => {
+					// 	console.log(`Brain fart`, message);
+					// 	// Activate a reconnect button
+					// 	this.setState({
+					// 		connected: false
+					// 	});
+					// }
 				});
 			}
+		}
+
+		reconnectToBot = () => {
+			this.bot.ros.connect('ws://' + this.props.host);
 		}
 
 		toggleExpression = (emotion) => () => {
@@ -155,13 +190,35 @@ const Brain = hoc((config, Wrapped) => {
 
 		visionIntepretation (saw) {
 			const state = this.resetStateOfAllEmotions();
+			const addItemToState = item => (state[item] = true);
+
 			if (visionMap[saw]) {
-				visionMap[saw].forEach(item => (state[item] = true));
+				// Exact matches first
+				visionMap[saw].forEach(addItemToState);
+			} else {
+				// Interpretative sub-matches
+				console.groupCollapsed('Attempting to identify "', saw, '".');
+				for (const item in visionMap) {
+					if (saw.indexOf(item) > -1) {
+						// Huzzah! Partial match.
+						visionMap[item].forEach(addItemToState);
+						console.log('%cFound a match! "%s" is a %s.', 'color: green', saw, item);
+					} else {
+						console.log('Doesn\'t look like it\'s a ', item);
+					}
+				}
+				console.groupEnd();
 			}
-			// console.log('visionState:', state);
+
 			return state;
 		}
 
+		/**
+		 * Expressions are outward displays of emotions. This consumes emotions and turns them into
+		 * expressions.
+		 *
+		 * @return {Object} A new complete expression state object
+		 */
 		compileExpressions () {
 			const exp = {};
 			for (const em in emotions) {
@@ -179,6 +236,8 @@ const Brain = hoc((config, Wrapped) => {
 				<Wrapped
 					{...rest}
 					{...cachedToggles}
+					connected={this.state.connected}
+					handleReconnect={this.reconnectToBot}
 					expression={this.compileExpressions()}
 					label={this.state.label}
 					active={this.state.active}

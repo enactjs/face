@@ -1,18 +1,19 @@
 
 @import "~@enact/ui/styles/mixins";
+@import "~@enact/moonstone/styles/rules";
 
-:focus {
-	outline: none;
-}
+// :focus {
+// 	outline: none;
+// }
 
 .app {
 	// styles can be put here
 	.position(0);
 	position: absolute;
 
-	:global(.moonstone) {
-		font-family: "Open Sans", "MuseoSans", "Museo Sans", sans-serif;
-	}
+	// :global(.moonstone) {
+	// 	font-family: "Open Sans", "MuseoSans", "Museo Sans", sans-serif;
+	// }
 
 	.controls {
 		background-color: gray;
@@ -21,7 +22,21 @@
 		z-index: 1;
 	}
 
-	.label {
+	.adminConsole {
+		position: fixed;
+		right: 0;
+		bottom: 12px;
+
+		&.connected {
+			display: none;
+		}
+	}
+
+	.footer {
 		background-color: darkgray;
+
+		.label {
+			color: #ffeb3b;
+		}
 	}
 }
