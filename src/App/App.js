@@ -103,10 +103,11 @@ const Brain = hoc((config, Wrapped) => {
 
 		componentDidMount () {
 			if (!this.bot) {
-				console.log('connect attempt ' + this.props.host)
+				console.log('Attempting Connection to', this.props.host);
 				this.bot = connect({
 					url: 'ws://' + this.props.host,
 					onMessage: message => {
+						console.log('%cReceived:', 'color: green', message);
 						if (this.job) {
 							this.job.stop();
 						}
@@ -116,7 +117,7 @@ const Brain = hoc((config, Wrapped) => {
 						});
 						this.job = new Job(() => {
 							this.setState({active: false});
-						}, 3000);
+						}, this.props.activeTimeout);
 						this.job.start();
 					}
 				});
