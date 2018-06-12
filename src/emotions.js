@@ -11,6 +11,7 @@ export default {
 	concerned: 'Concerned',
 	confused: 'Confused',
 	happy: 'Happy',
+	tremble: 'Tremble',
 	no: 'Nope!',
 	sad: 'Sad',
 	vexed: 'Vexed'

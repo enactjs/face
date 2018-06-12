@@ -10,6 +10,14 @@
 		transform: translate(-50%, -40%) rotate(-8deg);
 	}
 }
+@keyframes tremble {
+	10%, 30%, 60%, 90% {
+		transform: translateX(-2%);
+	}
+	13%, 40%, 65%, 98% {
+		transform: translateX(2%);
+	}
+}
 @keyframes no {
 	0%, 70% {
 		transform: translate(0, 0);
@@ -152,6 +160,12 @@
 				background-color: skyblue;
 			}
 		}
+	}
+
+	&.tremble {
+		transform: translate(0%, 0%);
+		animation: 0.5s none linear infinite;
+		animation-name: tremble;
 	}
 
 	&.vexed {
