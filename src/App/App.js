@@ -6,16 +6,27 @@ import {Layout, Cell} from '@enact/ui/Layout';
 import Transition from '@enact/ui/Transition';
 import BodyText from '@enact/moonstone/BodyText';
 import Skinnable from '@enact/moonstone/Skinnable';
+import SpotlightRootDecorator from '@enact/spotlight/SpotlightRootDecorator';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
 import ToggleButton from '@enact/moonstone/ToggleButton';
 import PropTypes from 'prop-types';
 import React from 'react';
 
 import emotions from '../emotions';
+import visionMap from '../visionMap';
 import connect from '../data/bot';
 import Head from '../views/Head';
 
 import css from './App.less';
+
+// Normalize visionMap
+// Convert any plain strings to small arrays.
+for (const item in visionMap) {
+	if (typeof visionMap[item] === 'string') {
+		visionMap[item] = [visionMap[item]];
+	}
+}
+
 
 const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
@@ -25,7 +36,11 @@ for (const em in emotions) {
 }
 
 // const MoonstoneControlsPanel = MoonstoneDecorator({float: true}, 'div');
-const MoonstoneControlsPanel = Skinnable({defaultSkin: 'dark'}, Cell);
+const MoonstoneControlsPanel = SpotlightRootDecorator(
+	Skinnable({defaultSkin: 'dark'},
+		Cell
+	)
+);
 
 const App = kind({
 	name: 'App',
@@ -43,14 +58,15 @@ const App = kind({
 
 	styles: {
 		css,
-		className: 'app'
+		className: 'app enact-unselectable'
 	},
 
 	render: ({expression, active, label, ...rest}) => {
 		const toggleButtons = [];
+		// console.log('expression:', expression);
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
-			toggleButtons.push(<ToggleButton key={em} small onClick={rest[toggler]} style={{marginBottom: '0.3em'}}>{emotions[em]}</ToggleButton>);
+			toggleButtons.push(<ToggleButton key={em} small selected={expression[em]} onClick={rest[toggler]} style={{marginBottom: '0.3em'}}>{emotions[em]}</ToggleButton>);
 
 			delete rest[toggler];
 		}
@@ -63,7 +79,7 @@ const App = kind({
 					<Head expression={expression} />
 				</Cell>
 				<MoonstoneControlsPanel shrink className={css.label}>
-					<Transition visible={active} type="fade" duration={active ? 0 : 'long'}>
+					<Transition visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
 						<BodyText centered>{label}</BodyText>
 					</Transition>
 				</MoonstoneControlsPanel>
@@ -92,13 +108,7 @@ const Brain = hoc((config, Wrapped) => {
 			super();
 
 			// Establish the base states
-			const state = {};
-			for (const em in emotions) {
-				cachedToggles[makeTogglerName(em)] = this.toggleExpression(em);
-				state[em] = false;
-			}
-
-			this.state = state;
+			this.state = this.resetStateOfAllEmotions();
 		}
 
 		componentDidMount () {
@@ -111,10 +121,14 @@ const Brain = hoc((config, Wrapped) => {
 						if (this.job) {
 							this.job.stop();
 						}
-						this.setState({
+
+						const state = {
 							label: message.label,
-							active: true
-						});
+							active: true,
+							...this.visionIntepretation(message.label)
+						};
+						this.setState(state);
+
 						this.job = new Job(() => {
 							this.setState({active: false});
 						}, this.props.activeTimeout);
@@ -128,6 +142,24 @@ const Brain = hoc((config, Wrapped) => {
 			const state = {};
 			state[emotion] = !this.state[emotion];
 			this.setState(state);
+		}
+
+		resetStateOfAllEmotions () {
+			const state = {};
+			for (const em in emotions) {
+				cachedToggles[makeTogglerName(em)] = this.toggleExpression(em);
+				state[em] = false;
+			}
+			return state;
+		}
+
+		visionIntepretation (saw) {
+			const state = this.resetStateOfAllEmotions();
+			if (visionMap[saw]) {
+				visionMap[saw].forEach(item => (state[item] = true));
+			}
+			// console.log('visionState:', state);
+			return state;
 		}
 
 		compileExpressions () {
