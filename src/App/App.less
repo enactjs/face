@@ -2,6 +2,7 @@
 //
 @import "~@enact/ui/styles/mixins";
 @import "~@enact/moonstone/styles/rules";
+@import "../styles/colors";
 
 @face-keepout-edge-size: 12px;
 
@@ -32,7 +33,7 @@
 	}
 
 	.headCanvas {
-		background-color: darkgray;
+		background-color: @face-head-color;
 		overflow: hidden;
 
 		.head {
