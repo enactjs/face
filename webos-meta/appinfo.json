@@ -1,6 +1,6 @@
 {
-	"id": "enact-ducky-face",
-	"version": "1.0.0",
+	"id": "com.enactjs.app.face",
+	"version": "0.1.0",
 	"vendor": "LGE-SVL",
 	"type": "web",
 	"main": "index.html",

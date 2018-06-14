@@ -1,6 +1,6 @@
 {
 	"name": "enact-face",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "An adorable expressive face that anyone can love.",
 	"author": "",
 	"main": "src/index.js",
