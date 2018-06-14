@@ -11,7 +11,8 @@ const Head = kind({
 	name: 'Head',
 
 	propTypes: {
-		expression: PropTypes.object
+		expression: PropTypes.object,
+		soundSrc: PropTypes.string
 	},
 
 	styles: {
@@ -19,10 +20,10 @@ const Head = kind({
 		className: 'head'
 	},
 
-	render: ({expression, ...rest}) => (
+	render: ({expression, soundSrc, ...rest}) => (
 		<Layout orientation="vertical" align="center center" {...rest}>
 			<Cell shrink>
-				<Face expression={expression} />
+				<Face expression={expression} soundSrc={soundSrc} />
 			</Cell>
 		</Layout>
 	)

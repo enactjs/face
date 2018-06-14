@@ -1,0 +1,7 @@
+[
+	{"name": "wga",     "pxPerRem": 12, "width": 800, "height": 480,  "aspectRatioName": "portable", "base": true},
+	{"name": "hd",      "pxPerRem": 16, "width": 1280, "height": 720,  "aspectRatioName": "hdtv"},
+	{"name": "fhd",     "pxPerRem": 24, "width": 1920, "height": 1080, "aspectRatioName": "hdtv"},
+	{"name": "uw-uxga", "pxPerRem": 24, "width": 2560, "height": 1080, "aspectRatioName": "cinema"},
+	{"name": "uhd",     "pxPerRem": 48, "width": 3840, "height": 2160, "aspectRatioName": "hdtv"}
+]

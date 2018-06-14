@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import clamp from 'ramda/src/clamp';
+import ReactAudioPlayer from 'react-audio-player';
 import kind from '@enact/core/kind';
 import {Layout, Cell} from '@enact/ui/Layout';
 
@@ -90,7 +91,8 @@ const Face = kind({
 	name: 'Face',
 
 	propTypes: {
-		expression: PropTypes.object
+		expression: PropTypes.object,
+		soundSrc: PropTypes.string
 	},
 
 	styles: {
@@ -113,13 +115,20 @@ const Face = kind({
 	},
 
 	// eslint-disable-next-line
-	render: ({lowerLip, upperLip, styler, ...rest}) => {
+	render: ({lowerLip, soundSrc, upperLip, styler, ...rest}) => {
 		delete rest.expression;
 		return (
 			<Layout {...rest}>
 				<Cell shrink className={styler.join('cheek', 'left')} />
 				<Cell size="25%" className={styler.join('eyeSocket', 'left')}><Eye /></Cell>
-				<Cell shrink className={css.lowerFace}><Mouth lowerLip={lowerLip} upperLip={upperLip} /></Cell>
+				<Cell shrink className={css.lowerFace}>
+					<ReactAudioPlayer
+						src={soundSrc}
+						autoPlay
+						// controls
+					/>
+					<Mouth lowerLip={lowerLip} upperLip={upperLip} />
+				</Cell>
 				<Cell size="25%" className={styler.join('eyeSocket', 'right')}><Eye /></Cell>
 				<Cell shrink className={styler.join('cheek', 'right')} />
 				<Cell shrink className={styler.join('droplet', 'right')} />

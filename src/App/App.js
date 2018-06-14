@@ -8,8 +8,9 @@ import Touchable from '@enact/ui/Touchable';
 import Transition from '@enact/ui/Transition';
 import BodyText from '@enact/moonstone/BodyText';
 import IconButton from '@enact/moonstone/IconButton';
-import Skinnable from '@enact/moonstone/Skinnable';
-import SpotlightRootDecorator from '@enact/spotlight/SpotlightRootDecorator';
+// import Skinnable from '@enact/moonstone/Skinnable';
+// import SpotlightRootDecorator from '@enact/spotlight/SpotlightRootDecorator';
+import Makeup from '../components/Makeup';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
 import Button from '@enact/moonstone/Button';
 // import ToggleButton from '@enact/moonstone/ToggleButton';
@@ -43,11 +44,13 @@ for (const em in emotions) {
 // const MoonstoneControlsPanel = MoonstoneDecorator({float: true}, 'div');
 // const ToggleableHead = Toggleable({toggleProp: 'onTap', prop: 'manualControl'}, Touchable(Head));
 const TappableHead = Touchable(Head);
-const MoonstoneControlsPanel = SpotlightRootDecorator(
-	Skinnable({defaultSkin: 'dark'},
-		Cell
-	)
-);
+// const MoonstoneControlsPanel = SpotlightRootDecorator(
+// 	Skinnable({defaultSkin: 'dark'},
+// 		Cell
+// 	)
+// );
+
+const MoonstoneControlsPanel = Cell;
 
 const App = kind({
 	name: 'App',
@@ -71,7 +74,7 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, handleReconnect, headStyle, imageSrc, label, manualControl, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, handleReconnect, headStyle, imageSrc, label, manualControl, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -80,8 +83,6 @@ const App = kind({
 
 			delete rest[toggler];
 		}
-		delete rest.wheelLeft;
-		delete rest.wheelRight;
 
 		return (
 			<Layout orientation="vertical" {...rest}>
@@ -89,7 +90,7 @@ const App = kind({
 					{toggleButtons}
 				</MoonstoneControlsPanel>
 				<Cell className={css.headCanvas}>
-					<TappableHead expression={expression} className={css.head} onTap={toggleManualMode} style={headStyle}/>
+					<TappableHead expression={expression} className={css.head} onTap={toggleManualMode} style={headStyle} soundSrc={soundSrc} />
 					<Transition className={css.messages} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
 						<div className={css.imagePreview} style={{backgroundImage: `url(${imageSrc})`}} />
 						<BodyText centered className={css.label}>{label}</BodyText>
@@ -169,6 +170,10 @@ const Brain = hoc((config, Wrapped) => {
 						wheelRight = (wheelRight / maxVel);
 
 						if (this.node) {
+							// left and right being +/- numbers means that adding them together determines our total velocity
+							// negative is backward, positive is forward, 0 is totally neutral, stopped or rotating.
+							this.node.style.setProperty('--face-wheel-velocity', (wheelLeft + wheelRight));
+
 							this.node.style.setProperty('--face-wheel-velocity-left', wheelLeft);
 							this.node.style.setProperty('--face-wheel-velocity-right', wheelRight);
 						}
@@ -271,8 +276,6 @@ const Brain = hoc((config, Wrapped) => {
 					handleReconnect={this.reconnectToBot}
 					imageSrc={`http://${hostname}:8001/`}
 					label={this.state.label}
-					wheelLeft={this.state.wheelLeft}
-					wheelRight={this.state.wheelRight}
 				/>
 			);
 		}
@@ -281,12 +284,14 @@ const Brain = hoc((config, Wrapped) => {
 });
 
 export default
-	Brain(
-	Toggleable({
-		toggleProp: 'toggleManualMode',
-		prop: 'manualControl'
-	},
-		App
-	)
+	Makeup(
+		Brain(
+			Toggleable({
+				toggleProp: 'toggleManualMode',
+				prop: 'manualControl'
+			},
+				App
+			)
+		)
 	);
 

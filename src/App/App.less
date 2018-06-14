@@ -9,6 +9,7 @@
 
 .app {
 	// Define CSS variables
+	--face-wheel-velocity: 0;
 	--face-wheel-velocity-left: 0;
 	--face-wheel-velocity-right: 0;
 
@@ -38,8 +39,8 @@
 
 		.head {
 			will-change: transform;
-			transition: 0.3s transform ease-in-out;
-			transform: rotate(calc(var(--face-wheel-velocity-right, 0) * 15deg));
+			transition: 0.5s transform ease-in-out;
+			transform: rotate(calc(var(--face-wheel-velocity, 0) * var(--face-wheel-velocity-right, 0) * 15deg));
 			transform-origin: center bottom;
 		}
 	}
