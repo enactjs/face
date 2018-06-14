@@ -8,6 +8,8 @@
 export default {
 	'remote control, remote':  'confused',
 	'joystick':                'vexed',
+	'beer bottle':             'tipsy',
+	'phone':                   'blush',
 
 	// Snakes
 	'snake':                   ['tremble', 'concerned'],

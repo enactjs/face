@@ -1,7 +1,39 @@
 // Face.less
 //
 
+@droplet-shape-transform: rotateY(50deg) rotateZ(45deg);
+
+
 // & {
+@keyframes tipsy {
+	10% {
+		transform: rotate(-4deg) translateY(10%);
+	}
+	13% {
+		transform: rotate(1deg);
+	}
+	30% {
+		transform: rotate(3deg) translateY(15%);
+		transform-origin: 0% 200%;
+	}
+	35% {
+		transform: rotate(0deg);
+	}
+	50% {
+		transform: rotate(5deg);
+	}
+	53% {
+		transform: translateY(-1%);
+	}
+	70%, 78% {
+		transform: rotate(-3deg);
+		transform-origin: 50% 100%;
+	}
+	72% {
+		transform: rotate(3deg);
+		transform-origin: 50% 100%;
+	}
+}
 @keyframes twitch {
 	10%, 30%, 60%, 90% {
 		transform: translate(-50%, -50%) rotate(-8deg);
@@ -40,6 +72,17 @@
 		transform: translate(10%, -10%) rotate(5deg);
 	}
 }
+@keyframes sweatDrip {
+	0% {
+		transform: scale(0) @droplet-shape-transform;
+	}
+	25% {
+		transform: scale(1) @droplet-shape-transform;
+	}
+	75% {
+		transform: translateY(200%) scale(1) @droplet-shape-transform;
+	}
+}
 // }
 
 .face {
@@ -47,6 +90,48 @@
 	height: 336px;
 	justify-content: space-between;
 	will-change: transform;
+
+	.cheek {
+		position: absolute;
+		z-index: 1;
+		bottom: 0;
+		height: 120px;
+		width: 120px;
+		background-image: radial-gradient(ellipse at center, rgba(234,4,161,1) 0%,rgba(234,4,161,0) 70%);
+		opacity: 0;
+		will-change: opacity;
+		transition: 2s opacity;
+
+		&.left {
+			left: 0;
+			transform: translateX(-100%);
+		}
+		&.right {
+			right: 0;
+			transform: translateX(100%);
+		}
+	}
+
+	.droplet {
+		@droplet-size: 120px;
+
+		position: absolute;
+		z-index: 1;
+		top: 0;
+		height: @droplet-size;
+		width: @droplet-size;
+		border-radius: 0 50% 50% 50%;
+		background-color: #0ef;
+		will-change: transform;
+		transition: 2s transform;
+		transform-origin: left top;
+		// transform: rotateY(50deg) rotateZ(45deg);
+
+		&.right {
+			right: (-1.5 * @droplet-size);
+			transform: scale(0) @droplet-shape-transform;
+		}
+	}
 
 	.eyeSocket {
 		// width: 40%;
@@ -102,11 +187,40 @@
 		}
 	}
 
+	.lowerFace {
+		position: absolute;
+		width: 372px;
+		height: 171px;
+		left: 50%;
+		transform: translateX(-50%);
+		bottom: -99px;
+		z-index: 1;
+	}
+
+	.mouth {
+		transition: 1s transform ease-in-out;
+		will-change: transform;
+
+		.throat {
+			fill: #C1272D;
+		}
+		.lip {
+			fill: #F7931E;
+		}
+		.lipShading {
+			opacity: 0.05;
+		}
+	}
+
 	&.angry {
 		.eye {
 			.lid.upper {
 				transform: translate(-50%, -10%) rotate(8deg);
 			}
+		}
+
+		.mouth {
+			transform+_: scaleX(0.7);
 		}
 	}
 
@@ -114,6 +228,18 @@
 		.eye {
 			.ball {
 				background-color: #b22;
+				background-image: radial-gradient(transparent 40%, black);
+			}
+		}
+	}
+
+	&.blush {
+		.cheek {
+			opacity: 1;
+		}
+		.eye {
+			.lid.lower {
+				transform: translate(-50%, -25%) rotate(6deg);
 			}
 		}
 	}
@@ -132,6 +258,18 @@
 			.lid.lower {
 				transform: translate(-50%, -40%) rotate(-8deg);
 			}
+		}
+		.mouth {
+			transform+_: rotate(-5deg);
+		}
+	}
+
+	// Combine the expressions from both emotions by importing both of the parts we want as mixins
+	// (verbosely named/referenced). They combine together because we used the `transform+_` technique.
+	&.angry.confused {
+		.mouth {
+			.face.angry .mouth();
+			.face.confused .mouth();
 		}
 	}
 
@@ -162,10 +300,25 @@
 		}
 	}
 
+	&.sweat {
+		.droplet {
+			animation: 2s none linear infinite;
+			animation-name: sweatDrip;
+		}
+	}
+
 	&.tremble {
 		transform: translate(0%, 0%);
 		animation: 0.5s none linear infinite;
 		animation-name: tremble;
+	}
+
+	&.tipsy {
+		transform: translate(0%, 0%);
+		transform-origin: 50% 200%;
+		animation: 10s none linear infinite;
+		animation-name: tipsy;
+		filter: blur(10px);
 	}
 
 	&.vexed {
@@ -178,3 +331,12 @@
 		}
 	}
 }
+
+// .face.angry.confused {
+// 	.mouth {
+// 		.face.angry .mouth();
+// 		.face.confused .mouth();
+// 	}
+// }
+
+

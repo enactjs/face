@@ -1,42 +1,86 @@
-
+// App.less
+//
 @import "~@enact/ui/styles/mixins";
 @import "~@enact/moonstone/styles/rules";
 
-// :focus {
-// 	outline: none;
-// }
+@face-keepout-edge-size: 12px;
+
 
 .app {
-	// styles can be put here
+	// Define CSS variables
+	--face-wheel-velocity-left: 0;
+	--face-wheel-velocity-right: 0;
+
 	.position(0);
 	position: absolute;
-
-	// :global(.moonstone) {
-	// 	font-family: "Open Sans", "MuseoSans", "Museo Sans", sans-serif;
-	// }
+	overflow: hidden;
 
 	.controls {
+		display: none;
 		background-color: gray;
 		color: orange;
-		padding: 18px;
+		padding: 0 0 @face-keepout-edge-size 0;
 		z-index: 1;
+
+		> * {
+			margin-top: @face-keepout-edge-size;
+		}
+
+		&.manualControl {
+			display: block;
+		}
+	}
+
+	.headCanvas {
+		background-color: darkgray;
+		overflow: hidden;
+
+		.head {
+			will-change: transform;
+			transition: 0.3s transform ease-in-out;
+			transform: rotate(calc(var(--face-wheel-velocity-right, 0) * 15deg));
+			transform-origin: center bottom;
+		}
+	}
+
+	.imagePreview {
+		width: 240px;
+		height: 180px;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		margin: @face-keepout-edge-size;
+		border-radius: 9px;
+		border: 6px solid white;
+		overflow: hidden;
+		background-size: cover;
+		float: left;
+
+		// .image {
+		// 	height: 160px;
+		// }
+	}
+
+	.messages {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+
+		.label {
+			// line-height: 180px;
+			margin-top: 144px;
+			color: #ffeb3b;
+		}
 	}
 
 	.adminConsole {
 		position: fixed;
 		right: 0;
-		bottom: 12px;
+		bottom: @face-keepout-edge-size;
 
 		&.connected {
 			display: none;
-		}
-	}
-
-	.footer {
-		background-color: darkgray;
-
-		.label {
-			color: #ffeb3b;
 		}
 	}
 }

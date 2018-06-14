@@ -3,15 +3,20 @@ import hoc from '@enact/core/hoc';
 import {Job} from '@enact/core/util';
 import {toCapitalized} from '@enact/i18n/util';
 import {Layout, Cell} from '@enact/ui/Layout';
+import Toggleable from '@enact/ui/Toggleable';
+import Touchable from '@enact/ui/Touchable';
 import Transition from '@enact/ui/Transition';
+import ForwardRef from '@enact/ui/ForwardRef';
 import BodyText from '@enact/moonstone/BodyText';
 import IconButton from '@enact/moonstone/IconButton';
 import Skinnable from '@enact/moonstone/Skinnable';
 import SpotlightRootDecorator from '@enact/spotlight/SpotlightRootDecorator';
 // import MoonstoneDecorator from '@enact/moonstone/MoonstoneDecorator';
-import ToggleButton from '@enact/moonstone/ToggleButton';
+import Button from '@enact/moonstone/Button';
+// import ToggleButton from '@enact/moonstone/ToggleButton';
 import PropTypes from 'prop-types';
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 import emotions from '../emotions';
 import visionMap from '../visionMap';
@@ -37,6 +42,8 @@ for (const em in emotions) {
 }
 
 // const MoonstoneControlsPanel = MoonstoneDecorator({float: true}, 'div');
+// const ToggleableHead = Toggleable({toggleProp: 'onTap', prop: 'manualControl'}, Touchable(Head));
+const TappableHead = Touchable(Head);
 const MoonstoneControlsPanel = SpotlightRootDecorator(
 	Skinnable({defaultSkin: 'dark'},
 		Cell
@@ -51,7 +58,8 @@ const App = kind({
 		active: PropTypes.bool,
 		connected: PropTypes.bool,
 		handleReconnect: PropTypes.func,
-		label: PropTypes.string
+		label: PropTypes.string,
+		manualControl: PropTypes.bool
 	},
 
 	defaultProps: {
@@ -64,30 +72,38 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, handleReconnect, label, styler, ...rest}) => {
+	// computed: {
+	// 	headStyle: ({wheelRight}) => ({
+	// 		transform: `rotate(${wheelRight * 15}deg)`
+	// 	})
+	// },
+
+	render: ({expression, active, connected, handleReconnect, headStyle, imageSrc, label, manualControl, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 		// console.log('expression:', expression);
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
-			toggleButtons.push(<ToggleButton key={em} small selected={expression[em]} onClick={rest[toggler]} style={{marginBottom: '0.3em'}}>{emotions[em]}</ToggleButton>);
+			toggleButtons.push(<Button key={em} small selected={expression[em]} onClick={rest[toggler]}>{emotions[em]}</Button>);
 
 			delete rest[toggler];
 		}
+		delete rest.wheelLeft;
+		delete rest.wheelRight;
+						// <img src={imageSrc} className={css.image} />
 		return (
 			<Layout orientation="vertical" {...rest}>
-				<MoonstoneControlsPanel shrink className={css.controls}>
+				<MoonstoneControlsPanel shrink className={styler.join(css.controls, {manualControl})}>
 					{toggleButtons}
 				</MoonstoneControlsPanel>
-				<Cell>
-					<Head expression={expression} />
-				</Cell>
-				<MoonstoneControlsPanel shrink className={css.footer}>
-					<div className={styler.join(css.adminConsole, {connected})}>
-						<IconButton onTap={handleReconnect}>repeat</IconButton>
-					</div>
-					<Transition visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
+				<Cell className={css.headCanvas}>
+					<TappableHead expression={expression} className={css.head} onTap={toggleManualMode} style={headStyle}/>
+					<Transition className={css.messages} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
+						<div className={css.imagePreview} style={{backgroundImage: `url(${imageSrc})`}} />
 						<BodyText centered className={css.label}>{label}</BodyText>
 					</Transition>
+				</Cell>
+				<MoonstoneControlsPanel shrink className={styler.join(css.adminConsole, {connected})}>
+					<IconButton onTap={handleReconnect}>repeat</IconButton>
 				</MoonstoneControlsPanel>
 			</Layout>
 		);
@@ -133,7 +149,7 @@ const Brain = hoc((config, Wrapped) => {
 							connected: true
 						});
 					},
-					onMessage: message => {
+					onDetected: message => {
 						console.log('%cSaw "%s" with %d\% certanty.', 'color: orange', message.label, parseInt(message.score * 100));
 						if (this.job) {
 							this.job.stop();
@@ -150,6 +166,28 @@ const Brain = hoc((config, Wrapped) => {
 							this.setState({active: false});
 						}, this.props.activeTimeout);
 						this.job.start();
+					},
+					onWheelsCmd: data => {
+						const maxVel = 0.31417423486709595;
+						let wheelLeft = data.vel_left || 0,
+							wheelRight = data.vel_right || 0;
+
+						wheelLeft = (wheelLeft / maxVel);
+						wheelRight = (wheelRight / maxVel);
+
+						// this.setState({wheelLeft, wheelRight});
+
+						if (this.node) {
+							// console.log('this.node:', this.node);
+							this.node.style.setProperty('--face-wheel-velocity-left', wheelLeft);
+							this.node.style.setProperty('--face-wheel-velocity-right', wheelRight);
+						}
+
+						// if (data.vel_left > 0) {
+
+						// }
+						// data.vel_right;
+						// data.vel_left;
 					},
 					onClose: () => {
 						console.log('%cBrain detached', 'color: red');
@@ -197,14 +235,14 @@ const Brain = hoc((config, Wrapped) => {
 				visionMap[saw].forEach(addItemToState);
 			} else {
 				// Interpretative sub-matches
-				console.groupCollapsed('Attempting to identify "', saw, '".');
+				console.groupCollapsed('Attempting to identify "' + saw + '".');
 				for (const item in visionMap) {
 					if (saw.indexOf(item) > -1) {
 						// Huzzah! Partial match.
 						visionMap[item].forEach(addItemToState);
 						console.log('%cFound a match! "%s" is a %s.', 'color: green', saw, item);
 					} else {
-						console.log('Doesn\'t look like it\'s a ', item);
+						console.log('Doesn\'t look like it\'s a', item);
 					}
 				}
 				console.groupEnd();
@@ -227,20 +265,40 @@ const Brain = hoc((config, Wrapped) => {
 			return exp;
 		}
 
+		setRef = (node) => {
+			// this.node = node;
+			this.node = ReactDOM.findDOMNode(node);
+			// console.log('successfully set the ref:', this.node);
+		}
+
+		// setRootElem ({setRootElem} = this.props) {
+		// 	if (setRootElem) {
+		// 		setRootElem(this.video);
+		// 		this.node = node;
+		// 	}
+		// }
+
 		render () {
-			const {...rest} = this.props;
+			const {host, setRef, ...rest} = this.props;
+			const [hostname] = host.split(':');
 			delete rest.activeTimeout;
 			delete rest.host;
 
+			// const ref = React.createRef();
 			return (
 				<Wrapped
 					{...rest}
 					{...cachedToggles}
-					connected={this.state.connected}
-					handleReconnect={this.reconnectToBot}
-					expression={this.compileExpressions()}
-					label={this.state.label}
+					//ref={ref}
+					ref={this.setRef}
 					active={this.state.active}
+					connected={this.state.connected}
+					expression={this.compileExpressions()}
+					handleReconnect={this.reconnectToBot}
+					imageSrc={`http://${hostname}:8001/`}
+					label={this.state.label}
+					wheelLeft={this.state.wheelLeft}
+					wheelRight={this.state.wheelRight}
 				/>
 			);
 		}
@@ -248,4 +306,17 @@ const Brain = hoc((config, Wrapped) => {
 
 });
 
-export default Brain(App);
+export default
+		// ForwardRef({prop: 'setRef'},
+	Brain(
+		Toggleable({
+			toggleProp: 'toggleManualMode',
+			prop: 'manualControl'
+			// toggle: 'toggleManualMode'
+		},
+			// Touchable(
+				App
+			)
+		// )
+	);
+
