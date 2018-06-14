@@ -6,7 +6,6 @@ import {Layout, Cell} from '@enact/ui/Layout';
 import Toggleable from '@enact/ui/Toggleable';
 import Touchable from '@enact/ui/Touchable';
 import Transition from '@enact/ui/Transition';
-import ForwardRef from '@enact/ui/ForwardRef';
 import BodyText from '@enact/moonstone/BodyText';
 import IconButton from '@enact/moonstone/IconButton';
 import Skinnable from '@enact/moonstone/Skinnable';
@@ -72,15 +71,9 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	// computed: {
-	// 	headStyle: ({wheelRight}) => ({
-	// 		transform: `rotate(${wheelRight * 15}deg)`
-	// 	})
-	// },
-
 	render: ({expression, active, connected, handleReconnect, headStyle, imageSrc, label, manualControl, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
-		// console.log('expression:', expression);
+
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
 			toggleButtons.push(<Button key={em} small selected={expression[em]} onClick={rest[toggler]}>{emotions[em]}</Button>);
@@ -89,7 +82,7 @@ const App = kind({
 		}
 		delete rest.wheelLeft;
 		delete rest.wheelRight;
-						// <img src={imageSrc} className={css.image} />
+
 		return (
 			<Layout orientation="vertical" {...rest}>
 				<MoonstoneControlsPanel shrink className={styler.join(css.controls, {manualControl})}>
@@ -175,19 +168,10 @@ const Brain = hoc((config, Wrapped) => {
 						wheelLeft = (wheelLeft / maxVel);
 						wheelRight = (wheelRight / maxVel);
 
-						// this.setState({wheelLeft, wheelRight});
-
 						if (this.node) {
-							// console.log('this.node:', this.node);
 							this.node.style.setProperty('--face-wheel-velocity-left', wheelLeft);
 							this.node.style.setProperty('--face-wheel-velocity-right', wheelRight);
 						}
-
-						// if (data.vel_left > 0) {
-
-						// }
-						// data.vel_right;
-						// data.vel_left;
 					},
 					onClose: () => {
 						console.log('%cBrain detached', 'color: red');
@@ -266,30 +250,20 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		setRef = (node) => {
-			// this.node = node;
+			// eslint-disable-next-line react/no-find-dom-node
 			this.node = ReactDOM.findDOMNode(node);
-			// console.log('successfully set the ref:', this.node);
 		}
 
-		// setRootElem ({setRootElem} = this.props) {
-		// 	if (setRootElem) {
-		// 		setRootElem(this.video);
-		// 		this.node = node;
-		// 	}
-		// }
-
 		render () {
-			const {host, setRef, ...rest} = this.props;
+			const {host, ...rest} = this.props;
 			const [hostname] = host.split(':');
 			delete rest.activeTimeout;
 			delete rest.host;
 
-			// const ref = React.createRef();
 			return (
 				<Wrapped
 					{...rest}
 					{...cachedToggles}
-					//ref={ref}
 					ref={this.setRef}
 					active={this.state.active}
 					connected={this.state.connected}
@@ -307,16 +281,12 @@ const Brain = hoc((config, Wrapped) => {
 });
 
 export default
-		// ForwardRef({prop: 'setRef'},
 	Brain(
-		Toggleable({
-			toggleProp: 'toggleManualMode',
-			prop: 'manualControl'
-			// toggle: 'toggleManualMode'
-		},
-			// Touchable(
-				App
-			)
-		// )
+	Toggleable({
+		toggleProp: 'toggleManualMode',
+		prop: 'manualControl'
+	},
+		App
+	)
 	);
 
