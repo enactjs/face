@@ -12,6 +12,7 @@
 	--face-wheel-velocity: 0;
 	--face-wheel-velocity-left: 0;
 	--face-wheel-velocity-right: 0;
+	--face-wheel-velocity-rotational: 0;
 
 	.position(0);
 	position: absolute;
@@ -37,42 +38,73 @@
 		background-color: @face-head-color;
 		overflow: hidden;
 
+		perspective-origin: 50% 50%;
+		perspective: 768px;
+
 		.head {
 			will-change: transform;
 			transition: 0.5s transform ease-in-out;
-			transform: rotate(calc(var(--face-wheel-velocity, 0) * var(--face-wheel-velocity-right, 0) * 15deg));
+			// first rotate controls head pitch forward/backward, second controls roll left-to-right
+			transform: rotateX(calc(var(--face-wheel-velocity, 0) * 10deg)) rotate(calc(var(--face-wheel-velocity-rotational, 0) * 15deg));
 			transform-origin: center bottom;
 		}
 	}
 
-	.imagePreview {
-		width: 240px;
-		height: 180px;
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		margin: @face-keepout-edge-size;
-		border-radius: 9px;
-		border: 6px solid white;
-		overflow: hidden;
-		background-size: cover;
-		float: left;
+	.messages {
+		position: absolute;
+		bottom: 25%;
+		left: 65%;
+		pointer-events: none;
+		display: inline-block;
 
-		// .image {
-		// 	height: 160px;
-		// }
+		.label {
+			@tail-size: 42px;
+			@bubble-color: #fd0;
+
+			background-color: @bubble-color;
+			max-width: 480px;
+			border-radius: 999px 999px 999px 0;
+			padding: 0.5em 1em;
+			color: #222;
+			display: inline-block;
+			margin: 0 0 0 @tail-size;
+
+			&::before {
+				content: "";
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				height: @tail-size;
+				width: @tail-size;
+				background: radial-gradient(circle at 0 0, transparent 70%, @bubble-color 71%) 0px 0px;
+				background-position: 100% 100%;
+				background-size: 75% 75%;
+				background-repeat: no-repeat;
+				background-size: 100%;
+			}
+
+		}
 	}
 
-	.messages {
+	.vision {
 		position: absolute;
 		right: 0;
 		bottom: 0;
 		left: 0;
+		pointer-events: none;
 
-		.label {
-			// line-height: 180px;
-			margin-top: 144px;
-			color: #ffeb3b;
+		.imagePreview {
+			width: 240px;
+			height: 180px;
+			// position: fixed;
+			// bottom: 0;
+			// left: 0;
+			margin: @face-keepout-edge-size;
+			border-radius: 9px;
+			border: 6px solid white;
+			overflow: hidden;
+			background-size: cover;
+			// float: left;
 		}
 	}
 

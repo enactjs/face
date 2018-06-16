@@ -22,7 +22,7 @@ const Head = kind({
 
 	render: ({expression, soundSrc, ...rest}) => (
 		<Layout orientation="vertical" align="center center" {...rest}>
-			<Cell shrink>
+			<Cell shrink className={css.headInner}>
 				<Face expression={expression} soundSrc={soundSrc} />
 			</Cell>
 		</Layout>

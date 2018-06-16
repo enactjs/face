@@ -27,10 +27,6 @@ function connect ({url, onConnection, onDetected, onWheelsCmd, onError, onClose}
 		name: "/wheels_cmd",
 		messageType: "duckietown_msgs/WheelsCmdStamped"
 	});
-	// wheels_cmd.subscribe(m => {
-	// 	$("#rwheel").value = m.vel_right;
-	// 	$("#lwheel").value = m.vel_left;
-	// });
 
 	detected.subscribe(onDetected || noop);
 	wheels_cmd.subscribe(onWheelsCmd || noop);
