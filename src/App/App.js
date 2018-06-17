@@ -26,11 +26,25 @@ import trollolol from '../../assets/sounds/trollolol.mp3';
 
 import css from './App.less';
 
+
 // Normalize visionMap
-// Convert any plain strings to small arrays.
+// Convert to the final, more elaborate, format so we don't have to check later on
 for (const item in visionMap) {
-	if (typeof visionMap[item] === 'string') {
-		visionMap[item] = [visionMap[item]];
+	if (typeof visionMap[item] === 'string' || Array.isArray(visionMap[item])) {
+		// Reassign to be an object and finish normalizing these two types later...
+		visionMap[item] = {
+			emotion: visionMap[item]
+		};
+	}
+
+	// Now that we know it's an object, let's normalize thees keys
+	if (visionMap[item].emotion && typeof visionMap[item].emotion === 'string') {
+		visionMap[item].emotion = [visionMap[item].emotion];
+	}
+	// Sound key can be either a string or an object. If it's an object, use it
+	// directly, otherwise build a basic object and use that.
+	if (visionMap[item].sound && typeof visionMap[item].sound === 'string') {
+		visionMap[item].sound = {src: visionMap[item].sound};
 	}
 }
 
@@ -41,20 +55,6 @@ const togglePropTypes = {};
 for (const em in emotions) {
 	togglePropTypes[makeTogglerName(em)] = PropTypes.func;
 }
-
-
-
-//
-// add yawn
-// add wink
-//
-// tie sounds to visions
-//
-//
-//
-//
-//
-
 
 
 const TappableHead = Touchable(Head);
@@ -151,6 +151,7 @@ const Brain = hoc((config, Wrapped) => {
 		initializeBotConnection () {
 			if (!this.bot) {
 				console.log('Attempting Connection to', this.props.host);
+				this.wheelData = {};  // Setup a place to store data from our connection
 				this.bot = connect({
 					url: 'ws://' + this.props.host,
 					onConnection: () => {
@@ -199,60 +200,74 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		onWheelsCmd = (data) => {
+			// only run this if it's actually different from the last time we ran it.
+			if (data.vel_left !== this.wheelData.vel_left || data.vel_right !== this.wheelData.vel_right) {
+				const maxVel = 0.31417423486709595;
+				let wheelLeft = data.vel_left || 0,
+					wheelRight = data.vel_right || 0,
+					velocity = 0,
+					rotational = 0;
 
-			const maxVel = 0.31417423486709595;
-			let wheelLeft = data.vel_left || 0,
-				wheelRight = data.vel_right || 0,
-				velocity = 0,
-				rotational = 0;
+				wheelLeft = (wheelLeft / maxVel);
+				wheelRight = (wheelRight / maxVel);
+				velocity = (wheelLeft + wheelRight);
+				console.log('velocity:', velocity);
 
-			wheelLeft = (wheelLeft / maxVel);
-			wheelRight = (wheelRight / maxVel);
-			velocity = (wheelLeft + wheelRight);
-			if (wheelLeft - wheelRight !== 0) rotational = (wheelLeft - wheelRight);
+				if (wheelLeft - wheelRight !== 0) rotational = (wheelLeft - wheelRight);
 
-			if (this.node) {
-				// left and right being +/- numbers means that adding them together determines our total velocity
-				// negative is backward, positive is forward, 0 is totally neutral, stopped or rotating.
-				this.node.style.setProperty('--face-wheel-velocity', velocity);
+				if (this.node) {
+					// left and right being +/- numbers means that adding them together determines our total velocity
+					// negative is backward, positive is forward, 0 is totally neutral, stopped or rotating.
+					this.node.style.setProperty('--face-wheel-velocity', velocity);
 
-				this.node.style.setProperty('--face-wheel-velocity-left', wheelLeft);
-				this.node.style.setProperty('--face-wheel-velocity-right', wheelRight);
-				this.node.style.setProperty('--face-wheel-velocity-rotational', rotational);
+					this.node.style.setProperty('--face-wheel-velocity-left', wheelLeft);
+					this.node.style.setProperty('--face-wheel-velocity-right', wheelRight);
+					this.node.style.setProperty('--face-wheel-velocity-rotational', rotational);
+				}
+
+				// Audio nonsense
+				if (this.jobSoundStart) {
+					this.jobSoundStart.stop();
+				}
+				// console.log('Preparing Sound playback', velocity);
+
+				this.jobSoundStart = new Job(() => {
+
+					let src = '';
+					// if (velocity > 1.9) src = birdtheword;
+					if (velocity > 0) src = trollolol;
+					// else if (velocity > 0) src = trollolol;
+					// else if (velocity < -1.9) src = birdtheword;
+					else if (velocity < -1.9) src = trollolol;
+					else if (velocity < 0) src = sadtrombone;
+
+					// console.log('Executing Sound playback of', src, velocity);
+					this.playSound({src, duration: 4000});
+
+				}, 20);
+				this.jobSoundStart.start();
+
+				// update previously saved values for later comparison
+				this.wheelData.vel_left = data.vel_left;
+				this.wheelData.vel_right = data.vel_right;
 			}
-
-			// Audio nonsense
-			if (this.jobSoundStart) {
-				this.jobSoundStart.stop();
-			}
-			this.jobSoundStart = new Job(() => {
-				let sound = '';
-				// if (velocity > 1) sound = birdtheword;
-				// else if (velocity > 0) sound = trollolol;
-				if (velocity > 0) sound = trollolol;
-				else if (velocity < 0) sound = sadtrombone;
-
-				this.playSound({sound, duration: 4000});
-
-			}, 200);
-			this.jobSoundStart.start();
 		}
 
-		playSound ({sound, duration}) {
-			console.log('Starting to play sound:', sound);
+		playSound = ({src, duration}) => {
+			console.log(src ? ('Starting to play sound: ' + src) : 'Playing nothing', duration);
 			if (this.jobSoundStop) {
 				this.jobSoundStop.stop();
 			}
 			if (duration) {
 				// If there is a duration, setup a stopper job
-				this.jobSoundStop = new Job(() => this.stopSound, duration);
+				this.jobSoundStop = new Job(this.stopSound, duration);
 				this.jobSoundStop.start();
 			}
 
-			this.setState({soundSrc: sound});
+			this.setState({soundSrc: src});
 		}
 
-		stopSound () {
+		stopSound = () => {
 			console.log('Restoring Silence');
 			this.setState({soundSrc: ''});
 		}
@@ -275,17 +290,21 @@ const Brain = hoc((config, Wrapped) => {
 		visionIntepretation (saw) {
 			const state = this.resetStateOfAllEmotions();
 			const addItemToState = item => (state[item] = true);
+			const addResponseToState = ({emotion, sound}) => {
+				if (emotion) emotion.forEach(addItemToState);
+				if (sound) this.playSound(sound);
+			};
 
 			if (visionMap[saw]) {
 				// Exact matches first
-				visionMap[saw].forEach(addItemToState);
+				addResponseToState(visionMap[saw]);
 			} else {
 				// Interpretative sub-matches
 				console.groupCollapsed('Attempting to identify "' + saw + '".');
 				for (const item in visionMap) {
 					if (saw.indexOf(item) > -1) {
 						// Huzzah! Partial match.
-						visionMap[item].forEach(addItemToState);
+						addResponseToState(visionMap[item]);
 						console.log('%cFound a match! "%s" is a %s.', 'color: green', saw, item);
 					} else {
 						console.log('Doesn\'t look like it\'s a', item);

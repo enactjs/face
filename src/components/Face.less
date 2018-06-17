@@ -86,6 +86,22 @@
 		transform: translateY(200%) scale(1) @droplet-shape-transform;
 	}
 }
+@keyframes blinkUpper {
+	1%, 4%, {
+		transform: translate(-50%, 0%) rotate(5deg);
+	}
+	10% {
+		transform: translate(-50%, -101%);
+	}
+}
+@keyframes blinkLower {
+	1%, 4% {
+		transform: translate(-50%, -100%) rotate(-8deg);
+	}
+	10% {
+		transform: translate(-50%, 1%);
+	}
+}
 // }
 
 .face {
@@ -236,6 +252,19 @@
 		}
 	}
 
+	&.blink {
+		.eye {
+			.lid.upper {
+				animation: 3s none linear infinite;
+				animation-name: blinkUpper;
+			}
+			.lid.lower {
+				animation: 3s none linear infinite;
+				animation-name: blinkLower;
+			}
+		}
+	}
+
 	&.blush {
 		.cheek {
 			opacity: 1;
@@ -330,6 +359,19 @@
 				transform: translate(-50%, -50%) rotate(-8deg);
 				animation: 0.5s none linear infinite;
 				animation-name: twitch;
+			}
+		}
+	}
+
+	&.wink {
+		.left .eye {
+			.lid.upper {
+				animation: 4s none linear infinite;
+				animation-name: blinkUpper;
+			}
+			.lid.lower {
+				animation: 4s none linear infinite;
+				animation-name: blinkLower;
 			}
 		}
 	}

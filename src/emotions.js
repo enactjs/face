@@ -8,6 +8,7 @@
 export default {
 	angry: 'Angry',
 	attackMode: 'Attack Mode',
+	blink: 'Blink',
 	blush: '*Blush*',
 	concerned: 'Concerned',
 	confused: 'Confused',
@@ -17,5 +18,6 @@ export default {
 	sweat: 'Sweat',
 	tipsy: 'Tipsy',
 	tremble: 'Tremble',
-	vexed: 'Vexed'
+	vexed: 'Vexed',
+	wink: 'Wink'
 };
