@@ -20,12 +20,22 @@ import connect from '../data/bot';
 import Head from '../views/Head';
 
 // Assets
-// import birdtheword from '../../assets/sounds/birdtheword.mp3';
+import birdtheword from '../../assets/sounds/birdtheword.mp3';
 import sadtrombone from '../../assets/sounds/sadtrombone.mp3';
 import trollolol from '../../assets/sounds/trollolol.mp3';
 
 import css from './App.less';
 
+
+// Movement speeds based on combined wheel velocity percentages 200% is both wheels full.
+const MOVEMENT = {
+	IDLE : 0,
+	SLOW : 0.1,
+	HALF : 1,
+	FULL : 1.9
+};
+
+const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
 // Normalize visionMap
 // Convert to the final, more elaborate, format so we don't have to check later on
@@ -48,14 +58,10 @@ for (const item in visionMap) {
 	}
 }
 
-
-const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
-
 const togglePropTypes = {};
 for (const em in emotions) {
 	togglePropTypes[makeTogglerName(em)] = PropTypes.func;
 }
-
 
 const TappableHead = Touchable(Head);
 
@@ -67,6 +73,11 @@ const App = kind({
 		active: PropTypes.bool,
 		connected: PropTypes.bool,
 		handleMockData: PropTypes.func,
+		handleSimForward: PropTypes.func,
+		handleSimRight: PropTypes.func,
+		handleSimLeft: PropTypes.func,
+		handleSimBackward: PropTypes.func,
+		handleSimStop: PropTypes.func,
 		handleReconnect: PropTypes.func,
 		label: PropTypes.string,
 		manualControl: PropTypes.bool
@@ -82,7 +93,7 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, soundSrc, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -102,8 +113,8 @@ const App = kind({
 					<Transition className={css.messages} visible={active} type="slide" direction="left" duration={active ? 0 : 'medium'}>
 						<BodyText centered className={css.label}>{label}</BodyText>
 					</Transition>
-					<Transition className={css.vision} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
-						<div className={css.imagePreview} style={{backgroundImage: (active ? `url(${imageSrc})` : 'none')}} />
+					<Transition className={css.vision} onHide={onHideImage} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
+						<div className={css.imagePreview} style={{backgroundImage: imageSrc ? `url(${imageSrc})` : 'none'}} />
 					</Transition>
 				</Cell>
 				<Cell shrink className={styler.join(css.adminConsole, {connected})}>
@@ -136,12 +147,20 @@ const Brain = hoc((config, Wrapped) => {
 			activeTimeout: 3000
 		}
 
-		constructor () {
-			super();
+		constructor (props) {
+			super(props);
+
+			// Store our current movement properties for standard referencing
+			this.movement = {};
 
 			// Establish the base states
 			this.state = this.resetStateOfAllEmotions();
 			this.state.connected = false;
+
+			const imageState = this.setImageSrc(props);
+
+			// Shallow state merge in new state values
+			this.state = {...this.state, ...imageState};
 		}
 
 		componentDidMount () {
@@ -186,9 +205,12 @@ const Brain = hoc((config, Wrapped) => {
 				this.jobDetected.stop();
 			}
 
+			const [label] = message.label.split(','); // Just use the first tagged thing in the onscreen message, for simplicity
+
 			const state = {
 				active: true,
-				label: message.label,
+				label,
+				activeImageSrc: this.state.imageSrc,
 				...this.visionIntepretation(message.label)
 			};
 			this.setState(state);
@@ -211,7 +233,17 @@ const Brain = hoc((config, Wrapped) => {
 				wheelLeft = (wheelLeft / maxVel);
 				wheelRight = (wheelRight / maxVel);
 				velocity = (wheelLeft + wheelRight);
-				console.log('velocity:', velocity);
+				// console.log('velocity:', velocity);
+
+				this.movement.speed = 'IDLE';
+				if (velocity > MOVEMENT.FULL)             { this.movement.speed = 'FULL'; this.movement.forward = true; }
+				else if (velocity > MOVEMENT.HALF)        { this.movement.speed = 'HALF'; this.movement.forward = true; }
+				else if (velocity > MOVEMENT.SLOW)        { this.movement.speed = 'SLOW'; this.movement.forward = true; }
+				else if (velocity < (MOVEMENT.FULL * -1)) { this.movement.speed = 'FULL'; this.movement.forward = false; }
+				else if (velocity < (MOVEMENT.HALF * -1)) { this.movement.speed = 'HALF'; this.movement.forward = false; }
+				else if (velocity < (MOVEMENT.SLOW * -1)) { this.movement.speed = 'SLOW'; this.movement.forward = false; }
+
+				// console.log('movement', this.movement.speed, 'velocity:', velocity, velocity > MOVEMENT.FULL, MOVEMENT.FULL);
 
 				if (wheelLeft - wheelRight !== 0) rotational = (wheelLeft - wheelRight);
 
@@ -232,16 +264,15 @@ const Brain = hoc((config, Wrapped) => {
 				// console.log('Preparing Sound playback', velocity);
 
 				this.jobSoundStart = new Job(() => {
+					const {speed, forward} = this.movement;
 
 					let src = '';
-					// if (velocity > 1.9) src = birdtheword;
-					if (velocity > 0) src = trollolol;
-					// else if (velocity > 0) src = trollolol;
-					// else if (velocity < -1.9) src = birdtheword;
-					else if (velocity < -1.9) src = trollolol;
-					else if (velocity < 0) src = sadtrombone;
+					if      (speed === 'SLOW' && forward) src = trollolol;
+					else if (speed === 'FULL' && forward) src = birdtheword;
+					else if (speed === 'SLOW' && !forward) src = sadtrombone;
+					else if (speed === 'FULL' && !forward) src = birdtheword;
 
-					// console.log('Executing Sound playback of', src, velocity);
+					console.log('%c%s %s', 'color: cyan', speed, forward ? 'AHEAD' : 'REVERSE');
 					this.playSound({src, duration: 4000});
 
 				}, 20);
@@ -254,7 +285,7 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		playSound = ({src, duration}) => {
-			console.log(src ? ('Starting to play sound: ' + src) : 'Playing nothing', duration);
+			// console.log(src ? ('Starting to play sound: ' + src) : 'Playing nothing', duration);
 			if (this.jobSoundStop) {
 				this.jobSoundStop.stop();
 			}
@@ -351,6 +382,25 @@ const Brain = hoc((config, Wrapped) => {
 			this.onWheelsCmd({vel_left: 0, vel_right: 0});
 		}
 
+		componentWillReceiveProps (nextProps) {
+			if (nextProps.host !== this.props.host) {
+				this.setState(this.setImageSrc());
+			}
+		}
+
+		/**
+		 * Compute the image source based on the host name.
+		 *
+		 * @param {Object} props An optional props object
+		 */
+		setImageSrc (props) {
+			const {host} = props || this.props;
+			if (host) {
+				const [hostname] = host.split(':');
+				return {imageSrc: `http://${hostname}:8001/`};
+			}
+		}
+
 		/**
 		 * Expressions are outward displays of emotions. This consumes emotions and turns them into
 		 * expressions.
@@ -365,14 +415,20 @@ const Brain = hoc((config, Wrapped) => {
 			return exp;
 		}
 
+		lingeringImageSrc = () => {
+			console.log('setting image state:', this);
+			this.setState({
+				activeImageSrc: this.state.active ? this.state.imageSrc : null
+			})
+		}
+
 		setRef = (node) => {
 			// eslint-disable-next-line react/no-find-dom-node
 			this.node = ReactDOM.findDOMNode(node);
 		}
 
 		render () {
-			const {host, ...rest} = this.props;
-			const [hostname] = host.split(':');
+			const {...rest} = this.props;
 			delete rest.activeTimeout;
 			delete rest.host;
 
@@ -391,7 +447,8 @@ const Brain = hoc((config, Wrapped) => {
 					handleSimBackward={this.simulateBackward}
 					handleSimStop={this.simulateStop}
 					handleReconnect={this.reconnectToBot}
-					imageSrc={`http://${hostname}:8001/`}
+					imageSrc={this.state.activeImageSrc}
+					onHideImage={this.lingeringImageSrc}
 					label={this.state.label}
 					soundSrc={this.state.soundSrc}
 				/>

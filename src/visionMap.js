@@ -12,7 +12,7 @@ export default {
 	'remote control, remote':  'confused',
 	'joystick':                'vexed',
 	'beer bottle':             'tipsy',
-	'phone':                   {sound: {src: birdtheword, duration: 3000}, emotion: 'blush'},
+	'phone':                   {sound: {src: birdtheword, duration: 3500}, emotion: 'blush'},
 	'bird':                    {sound: birdtheword},
 
 	// Snakes
