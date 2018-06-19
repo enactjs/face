@@ -6,14 +6,11 @@
 <script src="https://static.robotwebtools.org/roslibjs/current/roslib.js"></script>
 <script>
 	const $ = document.querySelector.bind(document);
-
 	const ros = new ROSLIB.Ros();
-
 	ros.on("error", error => console.log(error) );
 
 	ros.on("connection", () => {
 		$("#status").innerText = "connected";
-
 		const detected = new ROSLIB.Topic({
 			ros: ros,
 			name: "/object_classifier/output",
@@ -24,7 +21,6 @@
 			t.value += `${m.label}\n`;
 			t.scrollTop = t.scrollHeight;
 		});
-
 		const detected_all = new ROSLIB.Topic({
 			ros: ros,
 			name: "/object_classifier/output_all",
@@ -35,28 +31,24 @@
 			t.value += `${m.label} (${m.score})\n`;
 			t.scrollTop = t.scrollHeight;
 		});
-
 		const ultrasound = new ROSLIB.Topic({
 			ros: ros,
 			name: "/sensor/ultrasound",
 			messageType: "sensor_msgs/Range"
 		});
 		ultrasound.subscribe(m => ($("#ultrasound").value = m.range));
-
 		const infrared = new ROSLIB.Topic({
 			ros: ros,
 			name: "/sensor/infrared",
 			messageType: "sensor_msgs/Range"
 		});
 		infrared.subscribe(m => ($("#infrared").value = m.range));
-
 		const obstacle = new ROSLIB.Topic({
 			ros: ros,
 			name: "/obstacle",
 			messageType: "duckietown_msgs/BoolStamped"
 		});
 		obstacle.subscribe(m => ($("#obstacle").value = m.data));
-
 		const car_cmd = new ROSLIB.Topic({
 			ros: ros,
 			name: "/sensor/car_cmd",
@@ -66,7 +58,6 @@
 			$("#velocity").value = m.v;
 			$("#omega").value = m.omega;
 		});
-
 		const wheels_cmd = new ROSLIB.Topic({
 			ros: ros,
 			name: "/wheels_cmd",
@@ -76,11 +67,30 @@
 			$("#rwheel").value = m.vel_right;
 			$("#lwheel").value = m.vel_left;
 		});
-
+		const joystick = new ROSLIB.Topic({
+			ros: ros,
+			name: "/joy",
+			messageType: "sensor_msgs/Joy"
+		});
+		joystick.subscribe(m => {
+			console.log(JSON.stringify(m));
+			let axes = "";
+			const a = Object.keys(m.axes);
+			for (let i=0; i<a.length; i++) {
+				axes += ` [${a[i]}]=${m.axes[a[i]]}`;
+			}
+			$("#axes").innerText = axes;
+			let buttons = "";
+			const b = Object.keys(m.buttons);
+			for (let i=0; i<b.length; i++) {
+				if (m.buttons[b[i]]) {
+					buttons += ` ${b[i]}`;
+				}
+			}
+			$("#buttons").innerText = buttons;
+		});
 	});
-
 	ros.on("close", () => ($("#status").innerText = "disconnected") );
-
 	window.onload = () => {
 		$("#connect").onclick = () => {
 			const address = $("#bridge").value;
@@ -94,14 +104,12 @@
 		if (address) {
 			$("#bridge").value = address;
 		}
-
 		const img = new ROSLIB.Topic({
 			ros: ros,
 			name: $("#topic").value,
 			queue_length: 1,
 			messageType: "sensor_msgs/CompressedImage"
 		});
-
 		$("#refresh_image").onclick = () => {
 			img.unsubscribe();
 			img.subscribe(message => {
@@ -111,13 +119,11 @@
 				img.unsubscribe();
 			});
 		}
-
 	};
 </script>
 </head>
 <body>
 	<p>ROS2 Bridge: <input id="bridge" type="text" value="10.194.183.145"> <input id="connect" type="button" value="Connect"></p>
-
 	<p>ROS2 Compressed image topic: <input id="topic" type="text" value="/image/compressed"></p>
 	<p>Status: <span id="status">disconnected</span></p>
 	<hr>
@@ -125,7 +131,8 @@
 	<p>Infrared sensor: <input id="infrared" type="text"></p>
 	<p>Obstacle: <input id="obstacle" type="text"></p>
 	<hr>
-	<p>Duckiebot:</p>
+	<p>Joystick Axes: <span id="axes"></span></p>
+	<p>Joystick Buttons: <span id="buttons"></span></p>
 	<p>Velocity: <input id="velocity" type="text"></p>
 	<p>Omega: <input id="omega" type="text"></p>
 	<p>Left Wheel: <input id="lwheel" type="text"></p>
@@ -145,6 +152,5 @@
 		 <textarea cols="100" rows="5" id="detected_all"></textarea>
 	</p>
 	<hr>
-
 </body>
 </html>
