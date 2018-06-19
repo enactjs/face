@@ -1,9 +1,33 @@
 /* eslint no-console: off */
 import ROSLIB from 'roslib';
+import {toCapitalized} from '@enact/i18n/util';
 
 function noop () {}
 
-function connect ({url, onConnection, onDetected, onWheelsCmd, onError, onClose} = {}) {
+const subscribedTopics = {
+	detected: {
+		name: '/object_classifier/output',
+		messageType: 'duckietown_msgs/ClassifiedObject'
+	},
+	wheelsCmd: {
+		name: '/wheels_cmd',
+		messageType: 'duckietown_msgs/WheelsCmdStamped'
+	},
+	ultrasound: {
+		name: '/sensor/ultrasound',
+		messageType: 'sensor_msgs/Range'
+	},
+	infrared: {
+		name: '/sensor/infrared',
+		messageType: 'sensor_msgs/Range'
+	},
+	obstacle: {
+		name: '/obstacle',
+		messageType: 'duckietown_msgs/BoolStamped'
+	},
+};
+
+function connect ({url, onConnection, onError, onClose, ...topics} = {}) {
 	if (!url) throw new Error('Bot roslib url required for usage.');
 
 	const ros = new ROSLIB.Ros({url});
@@ -16,21 +40,18 @@ function connect ({url, onConnection, onDetected, onWheelsCmd, onError, onClose}
 	// cat /usr/lib/python3.5/site-packages/object_classifier/object_classification.py
 
 	// Subscribing to a Topic
-	const detected = new ROSLIB.Topic({
-		ros: ros,
-		name: '/object_classifier/output',
-		messageType: 'duckietown_msgs/ClassifiedObject'
-	});
+	for (const topicTitle in subscribedTopics) {
+		const topicHandle = new ROSLIB.Topic({
+			ros,
+			...subscribedTopics[topicTitle]
+		});
 
-	const wheels_cmd = new ROSLIB.Topic({
-		ros: ros,
-		name: "/wheels_cmd",
-		messageType: "duckietown_msgs/WheelsCmdStamped"
-	});
+		const handlerName = ('on' + toCapitalized(topicTitle));
+		// console.log('Setting up:', handlerName, 'for', topicTitle, 'with', subscribedTopics[topicTitle]);
+		topicHandle.subscribe(topics[handlerName] || noop);
+	}
 
-	detected.subscribe(onDetected || noop);
-	wheels_cmd.subscribe(onWheelsCmd || noop);
-	return {ros, detected, wheels_cmd};
+	return {ros};
 }
 
 export default connect;

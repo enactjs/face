@@ -93,7 +93,7 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, debugReadout, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -109,6 +109,7 @@ const App = kind({
 					{toggleButtons}
 				</Cell>
 				<Cell className={css.headCanvas}>
+					<div className={css.debugReadout}>{debugReadout}</div>
 					<TappableHead expression={expression} className={css.head} onTap={toggleManualMode} style={headStyle} soundSrc={soundSrc} />
 					<Transition className={css.messages} visible={active} type="slide" direction="left" duration={active ? 0 : 'medium'}>
 						<BodyText centered className={css.label}>{label}</BodyText>
@@ -139,12 +140,14 @@ const Brain = hoc((config, Wrapped) => {
 
 		static propTypes = {
 			host: PropTypes.string,
-			activeTimeout: PropTypes.number
+			activeTimeout: PropTypes.number,
+			debugReadoutInterval: PropTypes.number
 		}
 
 		static defaultProps = {
 			host: '',
-			activeTimeout: 3000
+			activeTimeout: 3000,
+			debugReadoutInterval: 1000
 		}
 
 		constructor (props) {
@@ -152,6 +155,9 @@ const Brain = hoc((config, Wrapped) => {
 
 			// Store our current movement properties for standard referencing
 			this.movement = {};
+			this.sensors = {};
+			this.debugReadoutInterval = props.debugReadoutInterval;
+			this.debugReadout = null;
 
 			// Establish the base states
 			this.state = this.resetStateOfAllEmotions();
@@ -179,15 +185,18 @@ const Brain = hoc((config, Wrapped) => {
 							connected: true
 						});
 					},
-					onDetected: this.onDetected,
-					onWheelsCmd: this.onWheelsCmd,
 					onClose: () => {
 						console.log('%cBrain detached', 'color: red');
 						// Activate a reconnect button
 						this.setState({
 							connected: false
 						});
-					}
+					},
+					onDetected: this.onDetected,
+					onInfrared: this.onInfrared,
+					onObstacle: this.onObstacle,
+					onUltrasound: this.onUltrasound,
+					onWheelsCmd: this.onWheelsCmd
 					// onError: message => {
 					// 	console.log(`Brain fart`, message);
 					// 	// Activate a reconnect button
@@ -196,7 +205,20 @@ const Brain = hoc((config, Wrapped) => {
 					// 	});
 					// }
 				});
+				this.debugReadout = setInterval(this.updateDebugReadout, this.debugReadoutInterval);
 			}
+		}
+
+		updateDebugReadout = () => {
+			const stringifyKeyVal = (key, val) => `${key}: ${val};\n`;
+			let debugReadout = '';
+			for (const d in this.movement) {
+				debugReadout+= stringifyKeyVal(d, this.movement[d]);
+			}
+			for (const d in this.sensors) {
+				debugReadout+= stringifyKeyVal(d, this.sensors[d]);
+			}
+			this.setState({debugReadout});
 		}
 
 		onDetected = (message) => {
@@ -219,6 +241,21 @@ const Brain = hoc((config, Wrapped) => {
 				this.setState({active: false});
 			}, this.props.activeTimeout);
 			this.jobDetected.start();
+		}
+
+		onInfrared = (data) => {
+			// console.log('onInfrared:', data.range, !!data.range);
+			this.sensors.groundSafe = !!data.range;
+		}
+
+		onUltrasound = (data) => {
+			// console.log('onUltrasound:', data.range);
+			this.sensors.range = data.range;
+		}
+
+		onObstacle = (data) => {
+			// console.log('onObstacle:', !!data);
+			this.sensors.impassableAhead = !!data.data; // yeah, data.data is weird. It's just what the key is called...
 		}
 
 		onWheelsCmd = (data) => {
@@ -275,7 +312,7 @@ const Brain = hoc((config, Wrapped) => {
 					console.log('%c%s %s', 'color: cyan', speed, forward ? 'AHEAD' : 'REVERSE');
 					this.playSound({src, duration: 4000});
 
-				}, 20);
+				}, 100);
 				this.jobSoundStart.start();
 
 				// update previously saved values for later comparison
@@ -389,19 +426,6 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		/**
-		 * Compute the image source based on the host name.
-		 *
-		 * @param {Object} props An optional props object
-		 */
-		setImageSrc (props) {
-			const {host} = props || this.props;
-			if (host) {
-				const [hostname] = host.split(':');
-				return {imageSrc: `http://${hostname}:8001/`};
-			}
-		}
-
-		/**
 		 * Expressions are outward displays of emotions. This consumes emotions and turns them into
 		 * expressions.
 		 *
@@ -415,8 +439,22 @@ const Brain = hoc((config, Wrapped) => {
 			return exp;
 		}
 
+		/**
+		 * Compute the image source based on the host name.
+		 *
+		 * @param {Object} props An optional props object
+		 */
+		setImageSrc (props) {
+			// return null;
+			const {host} = props || this.props;
+			if (host) {
+				const [hostname] = host.split(':');
+				return {imageSrc: `http://${hostname}:8001/`};
+			}
+		}
+
 		lingeringImageSrc = () => {
-			console.log('setting image state:', this);
+			// console.log('setting image state:', this);
 			this.setState({
 				activeImageSrc: this.state.active ? this.state.imageSrc : null
 			})
@@ -430,6 +468,7 @@ const Brain = hoc((config, Wrapped) => {
 		render () {
 			const {...rest} = this.props;
 			delete rest.activeTimeout;
+			delete rest.debugReadoutInterval;
 			delete rest.host;
 
 			return (
@@ -451,6 +490,7 @@ const Brain = hoc((config, Wrapped) => {
 					onHideImage={this.lingeringImageSrc}
 					label={this.state.label}
 					soundSrc={this.state.soundSrc}
+					debugReadout={this.state.debugReadout}
 				/>
 			);
 		}
