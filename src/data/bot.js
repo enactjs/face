@@ -9,9 +9,21 @@ const subscribedTopics = {
 		name: '/object_classifier/output',
 		messageType: 'duckietown_msgs/ClassifiedObject'
 	},
+	detectedAll: {
+		name: '/object_classifier/output_all',
+		messageType: 'duckietown_msgs/ClassifiedObject'
+	},
+	joystick: {
+		name: '/joy',
+		messageType: 'sensor_msgs/Joy'
+	},
 	wheelsCmd: {
 		name: '/wheels_cmd',
 		messageType: 'duckietown_msgs/WheelsCmdStamped'
+	},
+	carCmd: {
+		name: '/sensor/car_cmd',
+		messageType: 'duckietown_msgs/Twist2DStamped'
 	},
 	ultrasound: {
 		name: '/sensor/ultrasound',

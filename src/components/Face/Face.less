@@ -1,7 +1,7 @@
 // Face.less
 //
 
-@import "../styles/colors";
+@import "../../styles/colors";
 
 
 @droplet-shape-transform: rotateY(50deg) rotateZ(45deg);
@@ -102,6 +102,22 @@
 		transform: translate(-50%, 1%);
 	}
 }
+@keyframes idleLookLeft {
+	10% {
+		transform: translate(10%, 0%);
+	}
+	50% {
+		transform: translate(-5%, -5%);
+	}
+}
+@keyframes idleLookRight {
+	10% {
+		transform: translate(10%, 0%) scaleX(-1);
+	}
+	50% {
+		transform: translate(-5%, -5%) scaleX(-1);
+	}
+}
 // }
 
 .face {
@@ -153,14 +169,17 @@
 	}
 
 	.eyeSocket {
-		// width: 40%;
+		animation: 10s none ease-in-out infinite;
 
 		&.left {
 			// placeholder
+			animation-name: idleLookLeft;
 		}
 		&.right {
+			animation-name: idleLookRight;
 			transform: scaleX(-1);
 		}
+
 	}
 
 	.eye {

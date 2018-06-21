@@ -14,10 +14,12 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import controlsMap from '../controlsMap';
 import emotions from '../emotions';
 import visionMap from '../visionMap';
 import connect from '../data/bot';
 import Head from '../views/Head';
+import ControllerIcon from '../components/ControllerIcon';
 
 // Assets
 import birdtheword from '../../assets/sounds/birdtheword.mp3';
@@ -34,6 +36,7 @@ const MOVEMENT = {
 	HALF : 1,
 	FULL : 1.9
 };
+
 
 const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
@@ -72,6 +75,7 @@ const App = kind({
 		...togglePropTypes,
 		active: PropTypes.bool,
 		connected: PropTypes.bool,
+		controllerMode: PropTypes.string,
 		handleMockData: PropTypes.func,
 		handleSimForward: PropTypes.func,
 		handleSimRight: PropTypes.func,
@@ -93,7 +97,7 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, debugReadout, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, controllerMode, debugReadout, handleControllerMode, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -107,6 +111,7 @@ const App = kind({
 			<Layout orientation="vertical" {...rest}>
 				<Cell shrink className={styler.join(css.controls, {manualControl})}>
 					{toggleButtons}
+					<ControllerIcon mode={controllerMode} onTap={handleControllerMode} />
 				</Cell>
 				<Cell className={css.headCanvas}>
 					<div className={css.debugReadout}>{debugReadout}</div>
@@ -141,19 +146,22 @@ const Brain = hoc((config, Wrapped) => {
 		static propTypes = {
 			host: PropTypes.string,
 			activeTimeout: PropTypes.number,
+			controllerMode: PropTypes.string,
 			debugReadoutInterval: PropTypes.number
 		}
 
 		static defaultProps = {
 			host: '',
 			activeTimeout: 3000,
-			debugReadoutInterval: 1000
+			controllerMode: 'top',
+			debugReadoutInterval: 500
 		}
 
 		constructor (props) {
 			super(props);
 
 			// Store our current movement properties for standard referencing
+			this.controls = {};
 			this.movement = {};
 			this.sensors = {};
 			this.debugReadoutInterval = props.debugReadoutInterval;
@@ -162,6 +170,7 @@ const Brain = hoc((config, Wrapped) => {
 			// Establish the base states
 			this.state = this.resetStateOfAllEmotions();
 			this.state.connected = false;
+			this.state.controllerMode = global.localStorage.getItem('controllerMode') || props.controllerMode;
 
 			const imageState = this.setImageSrc(props);
 
@@ -171,6 +180,13 @@ const Brain = hoc((config, Wrapped) => {
 
 		componentDidMount () {
 			this.initializeBotConnection();
+		}
+
+		componentWillReceiveProps (nextProps) {
+			// If the host changes, update the imageSrc URL
+			if (nextProps.host !== this.props.host) {
+				this.setState(this.setImageSrc());
+			}
 		}
 
 		initializeBotConnection () {
@@ -193,6 +209,7 @@ const Brain = hoc((config, Wrapped) => {
 						});
 					},
 					onDetected: this.onDetected,
+					onJoystick: this.onJoystick,
 					onInfrared: this.onInfrared,
 					onObstacle: this.onObstacle,
 					onUltrasound: this.onUltrasound,
@@ -209,17 +226,9 @@ const Brain = hoc((config, Wrapped) => {
 			}
 		}
 
-		updateDebugReadout = () => {
-			const stringifyKeyVal = (key, val) => `${key}: ${val};\n`;
-			let debugReadout = '';
-			for (const d in this.movement) {
-				debugReadout+= stringifyKeyVal(d, this.movement[d]);
-			}
-			for (const d in this.sensors) {
-				debugReadout+= stringifyKeyVal(d, this.sensors[d]);
-			}
-			this.setState({debugReadout});
-		}
+		//
+		// Topic Handling Methods
+		//
 
 		onDetected = (message) => {
 			console.log('%cSaw "%s" with %d\% certanty.', 'color: orange', message.label, parseInt(message.score * 100));
@@ -241,6 +250,23 @@ const Brain = hoc((config, Wrapped) => {
 				this.setState({active: false});
 			}, this.props.activeTimeout);
 			this.jobDetected.start();
+		}
+
+		onJoystick = (data) => {
+			const axes = {};
+			for (const ax in data.axes) {
+				const axisName = this.isAxis(ax);
+				if (axisName) axes[axisName] = data.axes[ax];
+			}
+
+			const buttons = {};
+			for (const bu in data.buttons) {
+				const buttonName = this.isButton(bu);
+				if (buttonName) buttons[buttonName] = !!data.buttons[bu];
+			}
+
+			this.controls.directional = axes;
+			this.controls.actions = buttons;
 		}
 
 		onInfrared = (data) => {
@@ -321,8 +347,12 @@ const Brain = hoc((config, Wrapped) => {
 			}
 		}
 
+		//
+		// Audio Support
+		//
+
 		playSound = ({src, duration}) => {
-			// console.log(src ? ('Starting to play sound: ' + src) : 'Playing nothing', duration);
+			console.log(src ? ('Starting to play sound: ' + src) : 'Playing nothing', duration);
 			if (this.jobSoundStop) {
 				this.jobSoundStop.stop();
 			}
@@ -339,6 +369,10 @@ const Brain = hoc((config, Wrapped) => {
 			console.log('Restoring Silence');
 			this.setState({soundSrc: ''});
 		}
+
+		//
+		// Emotions and Expressions
+		//
 
 		toggleExpression = (emotion) => () => {
 			const state = {};
@@ -384,9 +418,49 @@ const Brain = hoc((config, Wrapped) => {
 			return state;
 		}
 
+		/**
+		 * Expressions are outward displays of emotions. This consumes emotions and turns them into
+		 * expressions.
+		 *
+		 * @return {Object} A new complete expression state object
+		 */
+		compileExpressions () {
+			const exp = {};
+			for (const em in emotions) {
+				if (this.state[em]) exp[em] = this.state[em];
+			}
+			return exp;
+		}
+
 		//
 		// Admin Console Functions
 		//
+
+		updateDebugReadout = () => {
+			const stringifyKeyVal = (key, val) => `${key}: ${val};\n`;
+			let debugReadout = '';
+			if (this.controls.directional) {
+				let activeAuttons = [];
+				for (const d in this.controls.directional) {
+					if (this.controls.directional[d]) activeAuttons.push(`${d} = ${this.controls.directional[d]}`);
+				}
+				debugReadout+= stringifyKeyVal('Directional', activeAuttons.join(', ') || 'none');
+			}
+			if (this.controls.actions) {
+				let activeAuttons = [];
+				for (const d in this.controls.actions) {
+					if (this.controls.actions[d]) activeAuttons.push(d);
+				}
+				debugReadout+= stringifyKeyVal('Actions', activeAuttons.join(', ') || 'none');
+			}
+			for (const d in this.movement) {
+				debugReadout+= stringifyKeyVal(d, this.movement[d]);
+			}
+			for (const d in this.sensors) {
+				debugReadout+= stringifyKeyVal(d, this.sensors[d]);
+			}
+			this.setState({debugReadout});
+		}
 
 		reconnectToBot = () => {
 			this.bot.ros.connect('ws://' + this.props.host);
@@ -419,25 +493,10 @@ const Brain = hoc((config, Wrapped) => {
 			this.onWheelsCmd({vel_left: 0, vel_right: 0});
 		}
 
-		componentWillReceiveProps (nextProps) {
-			if (nextProps.host !== this.props.host) {
-				this.setState(this.setImageSrc());
-			}
-		}
-
-		/**
-		 * Expressions are outward displays of emotions. This consumes emotions and turns them into
-		 * expressions.
-		 *
-		 * @return {Object} A new complete expression state object
-		 */
-		compileExpressions () {
-			const exp = {};
-			for (const em in emotions) {
-				if (this.state[em]) exp[em] = this.state[em];
-			}
-			return exp;
-		}
+		//
+		// "Clever" Image Support
+		// Facilitates only using the costly image when it's visible on screen.
+		//
 
 		/**
 		 * Compute the image source based on the host name.
@@ -460,6 +519,25 @@ const Brain = hoc((config, Wrapped) => {
 			})
 		}
 
+		// Controller configuration handler
+		isAxis = (axis) => controlsMap[this.state.controllerMode].axis[axis] || null;
+		isButton = (button) => controlsMap[this.state.controllerMode].buttons[button] || null;
+
+		changeControllerMode = () => {
+			const modes = ['top', 'left', 'bottom'];
+			const newState = {};
+			for (let i = 0; i < modes.length; i++) {
+				if (this.state.controllerMode === modes[i]) {
+					newState.controllerMode = modes[(i + 1) % modes.length];
+					global.localStorage.setItem('controllerMode', newState.controllerMode);
+				}
+			}
+			this.setState(newState);
+		}
+
+		/**
+		 * For direct node updates, css variables, specifically
+		 */
 		setRef = (node) => {
 			// eslint-disable-next-line react/no-find-dom-node
 			this.node = ReactDOM.findDOMNode(node);
@@ -478,7 +556,9 @@ const Brain = hoc((config, Wrapped) => {
 					ref={this.setRef}
 					active={this.state.active}
 					connected={this.state.connected}
+					controllerMode={this.state.controllerMode}
 					expression={this.compileExpressions()}
+					handleControllerMode={this.changeControllerMode}
 					handleMockData={this.importMockData}
 					handleSimForward={this.simulateForward}
 					handleSimRight={this.simulateRight}

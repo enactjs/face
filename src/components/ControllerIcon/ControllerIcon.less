@@ -1,0 +1,94 @@
+// ControllerIcon.less
+//
+
+@keyframes blink {
+	100% {
+		opacity: 0.2;
+	}
+}
+
+.controllerIcon {
+	@light-offset-before: translate(-3px, -3px);
+	@light-offset-after: translate(3px, -3px);
+
+	position: relative;
+	display: inline-block;
+	color: cyan;
+
+	.bg {
+		&::before,
+		&::after {
+			animation: 0.15s none 4 alternate;
+			content: "";
+			position: absolute;
+			height: 50%;
+			width: 50%;
+			border: 6px solid cyan;
+			box-sizing: border-box;
+			will-change: opacity;
+		}
+
+		&::before {
+			border-top-left-radius: 99px;
+			border-bottom-style: none;
+			border-right-style: none;
+			top: 0;
+			left: 0;
+			transform-origin: right bottom;
+		}
+
+		&::after {
+			border-top-right-radius: 99px;
+			border-bottom-style: none;
+			border-left-style: none;
+			top: 0;
+			left: 50%;
+			transform-origin: left bottom;
+		}
+	}
+
+	&.animating {
+		.bg {
+			&::before,
+			&::after {
+				animation-name: blink;
+			}
+		}
+	}
+
+	&.top .bg {
+		&::before {
+			transform: @light-offset-before;
+		}
+		&::after {
+			transform: @light-offset-after;
+		}
+	}
+
+	&.left .bg {
+		&::before {
+			transform: rotate(-0.25turn) @light-offset-before;
+		}
+		&::after {
+			transform: rotate(-0.25turn) @light-offset-after;
+		}
+	}
+
+	&.bottom .bg {
+		&::before {
+			transform: rotate(-0.5turn) @light-offset-before;
+		}
+		&::after {
+			transform: rotate(-0.5turn) @light-offset-after;
+		}
+	}
+
+	&.right .bg {
+		&::before {
+			transform: rotate(-0.75turn) @light-offset-before;
+		}
+		&::after {
+			transform: rotate(-0.75turn) @light-offset-after;
+		}
+	}
+}
