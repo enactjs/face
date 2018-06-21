@@ -38,8 +38,17 @@
 		position: absolute;
 		top: 0;
 		left: @face-keepout-edge-size;
+		z-index: 1;
 		white-space: pre-wrap;
 		font-family: monospace;
+		display: none;
+		background-color: rgba(0,0,0, 0.1);
+		padding: 0.3em 0.7em 0.7em 0.7em;
+		color: white;
+		border-radius: 0 0 1em 1em;
+	}
+	&.debug .debugReadout {
+		display: block;
 	}
 
 	.headCanvas {

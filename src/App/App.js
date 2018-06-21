@@ -10,6 +10,7 @@ import BodyText from '@enact/moonstone/BodyText';
 import IconButton from '@enact/moonstone/IconButton';
 import Makeup from '../components/Makeup';
 import Button from '@enact/moonstone/Button';
+import ToggleButton from '@enact/moonstone/ToggleButton';
 import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -83,6 +84,7 @@ const App = kind({
 		handleSimBackward: PropTypes.func,
 		handleSimStop: PropTypes.func,
 		handleReconnect: PropTypes.func,
+		handleToggleDebug: PropTypes.func,
 		label: PropTypes.string,
 		manualControl: PropTypes.bool
 	},
@@ -97,7 +99,11 @@ const App = kind({
 		className: 'app enact-unselectable'
 	},
 
-	render: ({expression, active, connected, controllerMode, debugReadout, handleControllerMode, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
+	computed: {
+		className: ({debug, styler}) => styler.append({debug})
+	},
+
+	render: ({expression, active, connected, controllerMode, debug, debugReadout, handleControllerMode, handleToggleDebug, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -112,6 +118,7 @@ const App = kind({
 				<Cell shrink className={styler.join(css.controls, {manualControl})}>
 					{toggleButtons}
 					<ControllerIcon mode={controllerMode} onTap={handleControllerMode} />
+					<ToggleButton onToggle={handleToggleDebug} selected={debug} small>Debugging</ToggleButton>
 				</Cell>
 				<Cell className={css.headCanvas}>
 					<div className={css.debugReadout}>{debugReadout}</div>
@@ -171,6 +178,7 @@ const Brain = hoc((config, Wrapped) => {
 			this.state = this.resetStateOfAllEmotions();
 			this.state.connected = false;
 			this.state.controllerMode = global.localStorage.getItem('controllerMode') || props.controllerMode;
+			this.state.debugging = false;
 
 			const imageState = this.setImageSrc(props);
 
@@ -437,29 +445,31 @@ const Brain = hoc((config, Wrapped) => {
 		//
 
 		updateDebugReadout = () => {
-			const stringifyKeyVal = (key, val) => `${key}: ${val};\n`;
-			let debugReadout = '';
-			if (this.controls.directional) {
-				let activeAuttons = [];
-				for (const d in this.controls.directional) {
-					if (this.controls.directional[d]) activeAuttons.push(`${d} = ${this.controls.directional[d]}`);
+			if (this.state.debugging) {
+				const stringifyKeyVal = (key, val) => `${key}: ${val};\n`;
+				let debugReadout = '';
+				if (this.controls.directional) {
+					let activeAuttons = [];
+					for (const d in this.controls.directional) {
+						if (this.controls.directional[d]) activeAuttons.push(`${d} = ${this.controls.directional[d]}`);
+					}
+					debugReadout+= stringifyKeyVal('Directional', activeAuttons.join(', ') || 'none');
 				}
-				debugReadout+= stringifyKeyVal('Directional', activeAuttons.join(', ') || 'none');
-			}
-			if (this.controls.actions) {
-				let activeAuttons = [];
-				for (const d in this.controls.actions) {
-					if (this.controls.actions[d]) activeAuttons.push(d);
+				if (this.controls.actions) {
+					let activeAuttons = [];
+					for (const d in this.controls.actions) {
+						if (this.controls.actions[d]) activeAuttons.push(d);
+					}
+					debugReadout+= stringifyKeyVal('Actions', activeAuttons.join(', ') || 'none');
 				}
-				debugReadout+= stringifyKeyVal('Actions', activeAuttons.join(', ') || 'none');
+				for (const d in this.movement) {
+					debugReadout+= stringifyKeyVal(d, this.movement[d]);
+				}
+				for (const d in this.sensors) {
+					debugReadout+= stringifyKeyVal(d, this.sensors[d]);
+				}
+				this.setState({debugReadout});
 			}
-			for (const d in this.movement) {
-				debugReadout+= stringifyKeyVal(d, this.movement[d]);
-			}
-			for (const d in this.sensors) {
-				debugReadout+= stringifyKeyVal(d, this.sensors[d]);
-			}
-			this.setState({debugReadout});
 		}
 
 		reconnectToBot = () => {
@@ -535,6 +545,8 @@ const Brain = hoc((config, Wrapped) => {
 			this.setState(newState);
 		}
 
+		toggleDebug = () => this.setState({debugging: !this.state.debugging})
+
 		/**
 		 * For direct node updates, css variables, specifically
 		 */
@@ -566,10 +578,12 @@ const Brain = hoc((config, Wrapped) => {
 					handleSimBackward={this.simulateBackward}
 					handleSimStop={this.simulateStop}
 					handleReconnect={this.reconnectToBot}
+					handleToggleDebug={this.toggleDebug}
 					imageSrc={this.state.activeImageSrc}
 					onHideImage={this.lingeringImageSrc}
 					label={this.state.label}
 					soundSrc={this.state.soundSrc}
+					debug={this.state.debugging}
 					debugReadout={this.state.debugReadout}
 				/>
 			);
