@@ -212,6 +212,9 @@ const Brain = hoc((config, Wrapped) => {
 					},
 					onClose: () => {
 						console.log('%cBrain detached', 'color: red');
+
+						this.initiateAutoReconnect();
+
 						// Activate a reconnect button
 						this.setState({
 							connected: false
@@ -220,8 +223,7 @@ const Brain = hoc((config, Wrapped) => {
 					onError: message => {
 						console.error(`Brain fart`, message);
 
-						this.reconnectToBotLater = new Job(this.reconnectToBot, 1000);
-						this.reconnectToBotLater.start();
+						this.initiateAutoReconnect();
 
 						// Activate a reconnect button
 						this.setState({
@@ -237,6 +239,12 @@ const Brain = hoc((config, Wrapped) => {
 				});
 				this.debugReadout = setInterval(this.updateDebugReadout, this.debugReadoutInterval);
 			}
+		}
+
+		initiateAutoReconnect = () => {
+			if (this.reconnectToBotLater) this.reconnectToBotLater.stop();
+			this.reconnectToBotLater = new Job(this.reconnectToBot, 1000);
+			this.reconnectToBotLater.start();
 		}
 
 		//
