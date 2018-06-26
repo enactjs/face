@@ -171,6 +171,7 @@ const Brain = hoc((config, Wrapped) => {
 			this.controls = {};
 			this.movement = {};
 			this.sensors = {};
+			this.wheelData = {};
 			this.debugReadoutInterval = props.debugReadoutInterval;
 			this.debugReadout = null;
 
@@ -199,12 +200,12 @@ const Brain = hoc((config, Wrapped) => {
 
 		initializeBotConnection () {
 			if (!this.bot) {
-				console.log('Attempting Connection to', this.props.host);
-				this.wheelData = {};  // Setup a place to store data from our connection
+				console.log('Connecting to', this.props.host);
 				this.bot = connect({
 					url: 'ws://' + this.props.host,
 					onConnection: () => {
 						console.log('%cBrain attached', 'color: green');
+						if (this.reconnectToBotLater) this.reconnectToBotLater.stop();
 						this.setState({
 							connected: true
 						});
@@ -216,19 +217,23 @@ const Brain = hoc((config, Wrapped) => {
 							connected: false
 						});
 					},
+					onError: message => {
+						console.error(`Brain fart`, message);
+
+						this.reconnectToBotLater = new Job(this.reconnectToBot, 1000);
+						this.reconnectToBotLater.start();
+
+						// Activate a reconnect button
+						this.setState({
+							connected: false
+						});
+					},
 					onDetected: this.onDetected,
 					onJoystick: this.onJoystick,
 					onInfrared: this.onInfrared,
 					onObstacle: this.onObstacle,
 					onUltrasound: this.onUltrasound,
 					onWheelsCmd: this.onWheelsCmd
-					// onError: message => {
-					// 	console.log(`Brain fart`, message);
-					// 	// Activate a reconnect button
-					// 	this.setState({
-					// 		connected: false
-					// 	});
-					// }
 				});
 				this.debugReadout = setInterval(this.updateDebugReadout, this.debugReadoutInterval);
 			}
@@ -473,6 +478,7 @@ const Brain = hoc((config, Wrapped) => {
 		}
 
 		reconnectToBot = () => {
+			console.warn('%cAttempting to reconnect with the brain at:', 'color: orange', this.props.host);
 			this.bot.ros.connect('ws://' + this.props.host);
 		}
 
