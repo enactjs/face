@@ -538,9 +538,7 @@ const Brain = hoc((config, Wrapped) => {
 
 		lingeringImageSrc = () => {
 			// console.log('setting image state:', this);
-			this.setState({
-				activeImageSrc: this.state.active ? this.state.imageSrc : null
-			})
+			this.setState(({active, imageSrc}) => ({activeImageSrc: active ? imageSrc : null}));
 		}
 
 		// Controller configuration handler
@@ -559,7 +557,7 @@ const Brain = hoc((config, Wrapped) => {
 			this.setState(newState);
 		}
 
-		toggleDebug = () => this.setState({debugging: !this.state.debugging})
+		toggleDebug = () => this.setState(({debugging}) => ({debugging: !debugging}));
 
 		/**
 		 * For direct node updates, css variables, specifically
