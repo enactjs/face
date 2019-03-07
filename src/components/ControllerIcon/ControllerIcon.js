@@ -6,7 +6,7 @@ import hoc from '@enact/core/hoc';
 import IconButton from '@enact/moonstone/IconButton';
 import Touchable from '@enact/ui/Touchable';
 
-import css from './ControllerIcon.less';
+import css from './ControllerIcon.module.less';
 
 const ControllerIconBase = kind({
 	name: 'ControllerIcon',

@@ -5,7 +5,7 @@ import ReactAudioPlayer from 'react-audio-player';
 import kind from '@enact/core/kind';
 import {Layout, Cell} from '@enact/ui/Layout';
 
-import css from './Face.less';
+import css from './Face.module.less';
 
 const Eye = kind({
 	name: 'Eye',

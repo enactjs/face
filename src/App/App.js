@@ -27,7 +27,7 @@ import birdtheword from '../../assets/sounds/birdtheword.mp3';
 import sadtrombone from '../../assets/sounds/sadtrombone.mp3';
 import trollolol from '../../assets/sounds/trollolol.mp3';
 
-import css from './App.less';
+import css from './App.module.less';
 
 
 // Movement speeds based on combined wheel velocity percentages 200% is both wheels full.

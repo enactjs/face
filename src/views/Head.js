@@ -5,7 +5,7 @@ import {Layout, Cell} from '@enact/ui/Layout';
 
 import Face from '../components/Face';
 
-import css from './Head.less';
+import css from './Head.module.less';
 
 const Head = kind({
 	name: 'Head',
