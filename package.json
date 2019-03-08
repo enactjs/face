@@ -1,6 +1,6 @@
 {
 	"name": "enact-face",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "An adorable expressive face that anyone can love.",
 	"author": "",
 	"main": "src/index.js",
@@ -30,12 +30,12 @@
 		"dist/*"
 	],
 	"dependencies": {
-		"@enact/core": "next",
-		"@enact/i18n": "next",
-		"@enact/moonstone": "next",
-		"@enact/spotlight": "next",
-		"@enact/ui": "next",
-		"@enact/webos": "next",
+		"@enact/core": "^2.3.0",
+		"@enact/i18n": "^2.3.0",
+		"@enact/moonstone": "^2.3.0",
+		"@enact/spotlight": "^2.3.0",
+		"@enact/ui": "^2.3.0",
+		"@enact/webos": "^2.3.0",
 		"prop-types": "^15",
 		"react": "^16",
 		"react-audio-player": "^0.10.0",

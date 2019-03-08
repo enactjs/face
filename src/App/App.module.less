@@ -1,11 +1,14 @@
-// App.less
+// App.module.less
 //
 @import "~@enact/ui/styles/mixins";
-@import "~@enact/moonstone/styles/rules";
 @import "../styles/colors";
 
 @face-keepout-edge-size: 12px;
 
+/* Prevent browser's default focus treatment (at least in Chrome) */
+:focus {
+	outline: none;
+}
 
 .app {
 	// Define CSS variables
