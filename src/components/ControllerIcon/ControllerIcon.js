@@ -1,6 +1,6 @@
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import React from 'react';
-import classnames from 'classnames'
+import classnames from 'classnames';
 import kind from '@enact/core/kind';
 import hoc from '@enact/core/hoc';
 import IconButton from '@enact/moonstone/IconButton';
@@ -10,6 +10,10 @@ import css from './ControllerIcon.module.less';
 
 const ControllerIconBase = kind({
 	name: 'ControllerIcon',
+
+	propTypes: {
+		mode: PropTypes.string
+	},
 
 	styles: {
 		css,
@@ -27,7 +31,7 @@ const ControllerIconBase = kind({
 	render: ({...rest}) => {
 		delete rest.mode;
 		return (
-			<IconButton minWidth={false} small {...rest} css={css}>
+			<IconButton minWidth={false} {...rest} css={css}>
 				closex
 			</IconButton>
 		);
@@ -51,14 +55,11 @@ const ControllerIconDecorator = hoc(defaultConfig, (config, Wrapped) => {
 			};
 		}
 
-		componentWillReceiveProps (nextProps) {
-			if (nextProps[config.activationProp] !== this.props[config.activationProp]) {
-				this.activateAnimation();
+		static getDerivedStateFromProps (nextProps, prevState) {
+			if (nextProps[config.activationProp] !== prevState.active) {
+				return {active: nextProps[config.activationProp]};
 			}
-		}
-
-		activateAnimation = () => {
-			this.setState({active: true});
+			return null;
 		}
 
 		deactivateAnimation = () => {

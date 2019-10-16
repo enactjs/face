@@ -78,12 +78,12 @@ const App = kind({
 		connected: PropTypes.bool,
 		controllerMode: PropTypes.string,
 		handleMockData: PropTypes.func,
-		handleSimForward: PropTypes.func,
-		handleSimRight: PropTypes.func,
-		handleSimLeft: PropTypes.func,
-		handleSimBackward: PropTypes.func,
-		handleSimStop: PropTypes.func,
 		handleReconnect: PropTypes.func,
+		handleSimBackward: PropTypes.func,
+		handleSimForward: PropTypes.func,
+		handleSimLeft: PropTypes.func,
+		handleSimRight: PropTypes.func,
+		handleSimStop: PropTypes.func,
 		handleToggleDebug: PropTypes.func,
 		label: PropTypes.string,
 		manualControl: PropTypes.bool
@@ -108,7 +108,7 @@ const App = kind({
 
 		for (const em in emotions) {
 			const toggler = makeTogglerName(em);
-			toggleButtons.push(<Button key={em} small selected={expression[em]} onClick={rest[toggler]}>{emotions[em]}</Button>);
+			toggleButtons.push(<Button key={em} selected={expression[em]} onClick={rest[toggler]}>{emotions[em]}</Button>);
 
 			delete rest[toggler];
 		}
@@ -118,7 +118,7 @@ const App = kind({
 				<Cell shrink className={styler.join(css.controls, {manualControl})}>
 					{toggleButtons}
 					<ControllerIcon mode={controllerMode} onTap={handleControllerMode} />
-					<ToggleButton onToggle={handleToggleDebug} selected={debug} small>Debugging</ToggleButton>
+					<ToggleButton onToggle={handleToggleDebug} selected={debug}>Debugging</ToggleButton>
 				</Cell>
 				<Cell className={css.headCanvas}>
 					<div className={css.debugReadout}>{debugReadout}</div>
@@ -151,17 +151,17 @@ const Brain = hoc((config, Wrapped) => {
 		static displayName = 'Brain'
 
 		static propTypes = {
-			host: PropTypes.string,
 			activeTimeout: PropTypes.number,
 			controllerMode: PropTypes.string,
-			debugReadoutInterval: PropTypes.number
+			debugReadoutInterval: PropTypes.number,
+			host: PropTypes.string
 		}
 
 		static defaultProps = {
-			host: '',
 			activeTimeout: 3000,
 			controllerMode: 'top',
-			debugReadoutInterval: 500
+			debugReadoutInterval: 500,
+			host: ''
 		}
 
 		constructor (props) {
@@ -180,6 +180,7 @@ const Brain = hoc((config, Wrapped) => {
 			this.state.connected = false;
 			this.state.controllerMode = global.localStorage.getItem('controllerMode') || props.controllerMode;
 			this.state.debugging = false;
+			this.state.host = props.host;
 
 			const imageState = this.setImageSrc(props);
 
@@ -187,15 +188,15 @@ const Brain = hoc((config, Wrapped) => {
 			this.state = {...this.state, ...imageState};
 		}
 
-		componentDidMount () {
-			this.initializeBotConnection();
+		static getDerivedStateFromProps (nextProps, prevState) {
+			if (nextProps.host !== prevState.host) {
+				return {host: nextProps.host, ...this.setImageSrc()};
+			}
+			return null;
 		}
 
-		componentWillReceiveProps (nextProps) {
-			// If the host changes, update the imageSrc URL
-			if (nextProps.host !== this.props.host) {
-				this.setState(this.setImageSrc());
-			}
+		componentDidMount () {
+			this.initializeBotConnection();
 		}
 
 		initializeBotConnection () {
@@ -221,7 +222,7 @@ const Brain = hoc((config, Wrapped) => {
 						});
 					},
 					onError: message => {
-						console.error(`Brain fart`, message);
+						console.error('Brain fart', message);
 
 						this.initiateAutoReconnect();
 
@@ -231,6 +232,7 @@ const Brain = hoc((config, Wrapped) => {
 						});
 					},
 					onDetected: this.onDetected,
+					onEmotions: this.onEmotions,
 					onJoystick: this.onJoystick,
 					onInfrared: this.onInfrared,
 					onObstacle: this.onObstacle,
@@ -320,12 +322,19 @@ const Brain = hoc((config, Wrapped) => {
 				// console.log('velocity:', velocity);
 
 				this.movement.speed = 'IDLE';
-				if (velocity > MOVEMENT.FULL)             { this.movement.speed = 'FULL'; this.movement.forward = true; }
-				else if (velocity > MOVEMENT.HALF)        { this.movement.speed = 'HALF'; this.movement.forward = true; }
-				else if (velocity > MOVEMENT.SLOW)        { this.movement.speed = 'SLOW'; this.movement.forward = true; }
-				else if (velocity < (MOVEMENT.FULL * -1)) { this.movement.speed = 'FULL'; this.movement.forward = false; }
-				else if (velocity < (MOVEMENT.HALF * -1)) { this.movement.speed = 'HALF'; this.movement.forward = false; }
-				else if (velocity < (MOVEMENT.SLOW * -1)) { this.movement.speed = 'SLOW'; this.movement.forward = false; }
+				if (velocity > MOVEMENT.FULL)             {
+					this.movement.speed = 'FULL'; this.movement.forward = true;
+				} else if (velocity > MOVEMENT.HALF)        {
+					this.movement.speed = 'HALF'; this.movement.forward = true;
+				} else if (velocity > MOVEMENT.SLOW)        {
+					this.movement.speed = 'SLOW'; this.movement.forward = true;
+				} else if (velocity < (MOVEMENT.FULL * -1)) {
+					this.movement.speed = 'FULL'; this.movement.forward = false;
+				} else if (velocity < (MOVEMENT.HALF * -1)) {
+					this.movement.speed = 'HALF'; this.movement.forward = false;
+				} else if (velocity < (MOVEMENT.SLOW * -1)) {
+					this.movement.speed = 'SLOW'; this.movement.forward = false;
+				}
 
 				// console.log('movement', this.movement.speed, 'velocity:', velocity, velocity > MOVEMENT.FULL, MOVEMENT.FULL);
 
@@ -466,20 +475,20 @@ const Brain = hoc((config, Wrapped) => {
 					for (const d in this.controls.directional) {
 						if (this.controls.directional[d]) activeAuttons.push(`${d} = ${this.controls.directional[d]}`);
 					}
-					debugReadout+= stringifyKeyVal('Directional', activeAuttons.join(', ') || 'none');
+					debugReadout += stringifyKeyVal('Directional', activeAuttons.join(', ') || 'none');
 				}
 				if (this.controls.actions) {
 					let activeAuttons = [];
 					for (const d in this.controls.actions) {
 						if (this.controls.actions[d]) activeAuttons.push(d);
 					}
-					debugReadout+= stringifyKeyVal('Actions', activeAuttons.join(', ') || 'none');
+					debugReadout += stringifyKeyVal('Actions', activeAuttons.join(', ') || 'none');
 				}
 				for (const d in this.movement) {
-					debugReadout+= stringifyKeyVal(d, this.movement[d]);
+					debugReadout += stringifyKeyVal(d, this.movement[d]);
 				}
 				for (const d in this.sensors) {
-					debugReadout+= stringifyKeyVal(d, this.sensors[d]);
+					debugReadout += stringifyKeyVal(d, this.sensors[d]);
 				}
 				this.setState({debugReadout});
 			}
@@ -605,14 +614,14 @@ const Brain = hoc((config, Wrapped) => {
 });
 
 export default
-	Makeup(
-		Brain(
-			Toggleable({
-				toggleProp: 'toggleManualMode',
-				prop: 'manualControl'
-			},
-				App
-			)
+Makeup(
+	Brain(
+		Toggleable({
+			toggleProp: 'toggleManualMode',
+			prop: 'manualControl'
+		},
+		App
 		)
-	);
+	)
+);
 

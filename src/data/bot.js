@@ -36,7 +36,7 @@ const subscribedTopics = {
 	obstacle: {
 		name: '/obstacle',
 		messageType: 'duckietown_msgs/BoolStamped'
-	},
+	}
 };
 
 function connect ({url, onConnection, onError, onClose, ...topics} = {}) {

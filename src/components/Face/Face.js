@@ -60,7 +60,8 @@ const Mouth = kind({
 		delete rest.upperLip;
 		delete rest.upperLipResting;
 		return (
-			<svg version="1.1"
+			<svg
+				version="1.1"
 				xmlns="http://www.w3.org/2000/svg"
 				// xmlns:xlink="http://www.w3.org/1999/xlink"
 				// xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
@@ -72,16 +73,17 @@ const Mouth = kind({
 				// width="352px"
 				// height="192px"
 				viewBox="0 0 352 192"
-				//style={{'enable-background': 'new 0 0 352 192'}}
+				// style={{'enable-background': 'new 0 0 352 192'}}
 				xmlSpace="preserve"
-				{...rest}>
-			<g>
-				<polygon className={css.throat} points="0,96 176,0 352,96 176,192"/>
-				<polygon className={styler.join('lip', 'upper')} points={`0,96 176,0 352,96 176,${upperLipTip}`}/>
-				<polygon className={styler.join('lip', 'lower')} points={`0,96 176,192 352,96 176,${lowerLipTip}`}/>
-				<polygon className={css.lipShading} points={`176,0 352,96 176,${upperLipTip}`} />
-				<polygon className={css.lipShading} points={`176,192 352,96 176,${lowerLipTip}`} />
-			</g>
+				{...rest}
+			>
+				<g>
+					<polygon className={css.throat} points="0,96 176,0 352,96 176,192" />
+					<polygon className={styler.join('lip', 'upper')} points={`0,96 176,0 352,96 176,${upperLipTip}`} />
+					<polygon className={styler.join('lip', 'lower')} points={`0,96 176,192 352,96 176,${lowerLipTip}`} />
+					<polygon className={css.lipShading} points={`176,0 352,96 176,${upperLipTip}`} />
+					<polygon className={css.lipShading} points={`176,192 352,96 176,${lowerLipTip}`} />
+				</g>
 			</svg>
 		);
 	}

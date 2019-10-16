@@ -22,7 +22,7 @@
 		"theme": "moonstone"
 	},
 	"eslintConfig": {
-		"extends": "enact"
+		"extends": "enact/strict"
 	},
 	"eslintIgnore": [
 		"node_modules/*",
@@ -30,12 +30,13 @@
 		"dist/*"
 	],
 	"dependencies": {
-		"@enact/core": "^2.3.0",
-		"@enact/i18n": "^2.3.0",
-		"@enact/moonstone": "^2.3.0",
-		"@enact/spotlight": "^2.3.0",
-		"@enact/ui": "^2.3.0",
-		"@enact/webos": "^2.3.0",
+		"@enact/core": "^3.0.0",
+		"@enact/i18n": "^3.0.0",
+		"@enact/moonstone": "^3.0.0",
+		"@enact/spotlight": "^3.0.0",
+		"@enact/ui": "^3.0.0",
+		"@enact/webos": "^3.0.0",
+		"ilib": "^14.2.0",
 		"prop-types": "^15",
 		"react": "^16",
 		"react-audio-player": "^0.10.0",
