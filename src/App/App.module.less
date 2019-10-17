@@ -42,6 +42,7 @@
 		color: orange;
 		padding: 0 0 @face-keepout-edge-size 0;
 		z-index: 1;
+		position: absolute;
 
 		> * {
 			margin-top: @face-keepout-edge-size;
@@ -150,6 +151,12 @@
 			background-size: cover;
 			// float: left;
 		}
+	}
+
+	.userConsole {
+		position: fixed;
+		left: 0;
+		bottom: @face-keepout-edge-size;
 	}
 
 	.adminConsole {

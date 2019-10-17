@@ -93,7 +93,9 @@ const App = kind({
 		handleSimStop: PropTypes.func,
 		handleToggleDebug: PropTypes.func,
 		label: PropTypes.string,
-		manualControl: PropTypes.bool
+		manualControl: PropTypes.bool,
+		onHideImage: PropTypes.func,
+		onVoiceRelay: PropTypes.func
 	},
 
 	defaultProps: {
@@ -110,7 +112,7 @@ const App = kind({
 		className: ({debug, expression, styler}) => styler.append({debug}, expression) // also output the expression classes here, in case the UI should respond differently given an expression
 	},
 
-	render: ({expression, active, connected, controllerMode, debug, debugReadout, handleControllerMode, handleToggleDebug, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, label, manualControl, soundSrc, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, controllerMode, debug, debugReadout, handleControllerMode, handleToggleDebug, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, label, manualControl, onVoiceRelay, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -140,14 +142,21 @@ const App = kind({
 						<div className={css.imagePreview} style={{backgroundImage: imageSrc ? `url(${imageSrc})` : 'none'}} />
 					</Transition> */}
 				</Cell>
-				<Cell shrink className={styler.join(css.adminConsole, {connected})}>
-					<IconButton onTap={handleReconnect}>repeat</IconButton>
-					<IconButton onTap={handleMockData}>repeatdownload</IconButton>
-					<IconButton onTap={handleSimLeft}>arrowlargeleft</IconButton>
-					<IconButton onTap={handleSimForward} style={{position: 'absolute', transform: 'translateY(-120%)'}}>arrowlargeup</IconButton>
-					<IconButton onTap={handleSimBackward}>arrowlargedown</IconButton>
-					<IconButton onTap={handleSimRight}>arrowlargeright</IconButton>
-					<IconButton onTap={handleSimStop}>stop</IconButton>
+				<Cell shrink>
+					<Layout orientation="horizontal" align="center space-between">
+						<Cell shrink className={css.userConsole}>
+							<Button onClick={onVoiceRelay}>Voice Demo</Button>
+						</Cell>
+						<Cell shrink className={styler.join(css.adminConsole, {connected})}>
+							<IconButton onTap={handleReconnect}>repeat</IconButton>
+							<IconButton onTap={handleMockData}>repeatdownload</IconButton>
+							<IconButton onTap={handleSimLeft}>arrowlargeleft</IconButton>
+							<IconButton onTap={handleSimForward} style={{position: 'absolute', transform: 'translateY(-120%)'}}>arrowlargeup</IconButton>
+							<IconButton onTap={handleSimBackward}>arrowlargedown</IconButton>
+							<IconButton onTap={handleSimRight}>arrowlargeright</IconButton>
+							<IconButton onTap={handleSimStop}>stop</IconButton>
+						</Cell>
+					</Layout>
 				</Cell>
 			</Layout>
 		);
@@ -424,6 +433,29 @@ const Brain = hoc((config, Wrapped) => {
 			}
 		}
 
+		relayVoiceMessage = (message) => {
+			const host = this.props.host;
+			if (message && host && typeof window !== 'undefined' && window.WebSocket) {
+				const [hostname] = host.split(':');
+
+				const connection = new window.WebSocket(`ws://${hostname}:9100`);
+				connection.onclose = () => {
+					console.log('Closing voice ws connection');
+				};
+				connection.onopen = () => {
+					connection.send(message);
+					connection.close();
+				};
+			}
+		}
+
+		handleVoiceRelay = ({emotion}) => {
+			emotion = emotion || this.state.label;
+			if (emotion) {
+				this.relayVoiceMessage(emotion);
+			}
+		}
+
 		//
 		// Audio Support
 		//
@@ -655,6 +687,7 @@ const Brain = hoc((config, Wrapped) => {
 					handleToggleDebug={this.toggleDebug}
 					imageSrc={this.state.activeImageSrc}
 					onHideImage={this.lingeringImageSrc}
+					onVoiceRelay={this.handleVoiceRelay}
 					label={this.state.label}
 					soundSrc={this.state.soundSrc}
 					debug={this.state.debugging}
