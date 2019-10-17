@@ -10,6 +10,21 @@
 	outline: none;
 }
 
+@keyframes waggle {
+	0%, 50%, 100% {
+		// transform: rotate(0deg);
+		transform: translateX(0%) rotate(0deg);
+	}
+	25% {
+		// transform: rotate(-5deg);
+		transform: translateX(-10%) rotate(-3deg);
+	}
+	75% {
+		// transform: rotate(5deg);
+		transform: translateX(15%) rotate(3deg);
+	}
+}
+
 .app {
 	// Define CSS variables
 	--face-wheel-velocity: 0;
@@ -76,6 +91,7 @@
 		left: 65%;
 		pointer-events: none;
 		display: inline-block;
+		transform-origin: bottom left;
 
 		.label {
 			@tail-size: 42px;
@@ -105,6 +121,12 @@
 				background-size: 100%;
 			}
 
+		}
+	}
+	&.happy {
+		.messages {
+			animation: 1s none linear infinite;
+			animation-name: waggle;
 		}
 	}
 

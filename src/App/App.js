@@ -18,6 +18,7 @@ import ReactDOM from 'react-dom';
 import controlsMap from '../controlsMap';
 import emotions from '../emotions';
 import visionMap from '../visionMap';
+import perceivedEmotionMap from '../perceivedEmotionMap';
 import connect from '../data/bot';
 import Head from '../views/Head';
 import ControllerIcon from '../components/ControllerIcon';
@@ -41,26 +42,32 @@ const MOVEMENT = {
 
 const makeTogglerName = (em) => 'toggle' + toCapitalized(em);
 
-// Normalize visionMap
 // Convert to the final, more elaborate, format so we don't have to check later on
-for (const item in visionMap) {
-	if (typeof visionMap[item] === 'string' || Array.isArray(visionMap[item])) {
-		// Reassign to be an object and finish normalizing these two types later...
-		visionMap[item] = {
-			emotion: visionMap[item]
-		};
-	}
+function normalizeMap (mapping) {
+	for (const item in mapping) {
+		if (typeof mapping[item] === 'string' || Array.isArray(mapping[item])) {
+			// Reassign to be an object and finish normalizing these two types later...
+			mapping[item] = {
+				emotion: mapping[item]
+			};
+		}
 
-	// Now that we know it's an object, let's normalize thees keys
-	if (visionMap[item].emotion && typeof visionMap[item].emotion === 'string') {
-		visionMap[item].emotion = [visionMap[item].emotion];
+		// Now that we know it's an object, let's normalize thees keys
+		if (mapping[item].emotion && typeof mapping[item].emotion === 'string') {
+			mapping[item].emotion = [mapping[item].emotion];
+		}
+		// Sound key can be either a string or an object. If it's an object, use it
+		// directly, otherwise build a basic object and use that.
+		if (mapping[item].sound && typeof mapping[item].sound === 'string') {
+			mapping[item].sound = {src: mapping[item].sound};
+		}
 	}
-	// Sound key can be either a string or an object. If it's an object, use it
-	// directly, otherwise build a basic object and use that.
-	if (visionMap[item].sound && typeof visionMap[item].sound === 'string') {
-		visionMap[item].sound = {src: visionMap[item].sound};
-	}
+	return mapping;
 }
+
+// Normalize visionMap
+normalizeMap(perceivedEmotionMap);
+normalizeMap(visionMap);
 
 const togglePropTypes = {};
 for (const em in emotions) {
@@ -100,10 +107,10 @@ const App = kind({
 	},
 
 	computed: {
-		className: ({debug, styler}) => styler.append({debug})
+		className: ({debug, expression, styler}) => styler.append({debug}, expression) // also output the expression classes here, in case the UI should respond differently given an expression
 	},
 
-	render: ({expression, active, connected, controllerMode, debug, debugReadout, handleControllerMode, handleToggleDebug, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, imageSrc, label, manualControl, onHideImage, soundSrc, toggleManualMode, styler, ...rest}) => {
+	render: ({expression, active, connected, controllerMode, debug, debugReadout, handleControllerMode, handleToggleDebug, handleMockData, handleSimForward, handleSimRight, handleSimLeft, handleSimBackward, handleSimStop, handleReconnect, headStyle, label, manualControl, soundSrc, toggleManualMode, styler, ...rest}) => {
 		const toggleButtons = [];
 
 		for (const em in emotions) {
@@ -112,6 +119,9 @@ const App = kind({
 
 			delete rest[toggler];
 		}
+
+		delete rest.imageSrc;
+		delete rest.onHideImage;
 
 		return (
 			<Layout orientation="vertical" {...rest}>
@@ -126,9 +136,9 @@ const App = kind({
 					<Transition className={css.messages} visible={active} type="slide" direction="left" duration={active ? 0 : 'medium'}>
 						<BodyText centered className={css.label}>{label}</BodyText>
 					</Transition>
-					<Transition className={css.vision} onHide={onHideImage} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
+					{/* <Transition className={css.vision} onHide={onHideImage} visible={active} type="slide" direction="down" duration={active ? 0 : 'long'}>
 						<div className={css.imagePreview} style={{backgroundImage: imageSrc ? `url(${imageSrc})` : 'none'}} />
-					</Transition>
+					</Transition> */}
 				</Cell>
 				<Cell shrink className={styler.join(css.adminConsole, {connected})}>
 					<IconButton onTap={handleReconnect}>repeat</IconButton>
@@ -154,6 +164,7 @@ const Brain = hoc((config, Wrapped) => {
 			activeTimeout: PropTypes.number,
 			controllerMode: PropTypes.string,
 			debugReadoutInterval: PropTypes.number,
+			emotionalCertanty: PropTypes.number,
 			host: PropTypes.string
 		}
 
@@ -161,6 +172,7 @@ const Brain = hoc((config, Wrapped) => {
 			activeTimeout: 3000,
 			controllerMode: 'top',
 			debugReadoutInterval: 500,
+			emotionalCertanty: 3,
 			host: ''
 		}
 
@@ -174,18 +186,18 @@ const Brain = hoc((config, Wrapped) => {
 			this.wheelData = {};
 			this.debugReadoutInterval = props.debugReadoutInterval;
 			this.debugReadout = null;
+			this.emotionStreak = 0;
+			this.previousEmotion = null;
 
 			// Establish the base states
-			this.state = this.resetStateOfAllEmotions();
-			this.state.connected = false;
-			this.state.controllerMode = global.localStorage.getItem('controllerMode') || props.controllerMode;
-			this.state.debugging = false;
-			this.state.host = props.host;
-
-			const imageState = this.setImageSrc(props);
-
-			// Shallow state merge in new state values
-			this.state = {...this.state, ...imageState};
+			this.state = {
+				...this.resetStateOfAllEmotions(),
+				connected: false,
+				controllerMode: global.localStorage.getItem('controllerMode') || props.controllerMode,
+				debugging: false,
+				host: props.host,
+				...this.setImageSrc(props)
+			};
 		}
 
 		static getDerivedStateFromProps (nextProps, prevState) {
@@ -273,6 +285,41 @@ const Brain = hoc((config, Wrapped) => {
 				this.setState({active: false});
 			}, this.props.activeTimeout);
 			this.jobDetected.start();
+		}
+
+		onEmotions = (message) => {
+			// console.log(message.emotions[0].emotion);
+			const label = message.emotions[0].emotion;
+			console.log('%cSaw "%s".', 'color: orange', label);
+
+			if (label === this.previousEmotion) {
+				// Same same
+				this.emotionStreak++;
+			} else {
+				// New emotion! Wow!
+				this.previousEmotion = label;
+				this.emotionStreak = 1;
+			}
+
+			// Only respond if we are pretty darn sure this is the way to go, and it's different from our current emotion
+			if (this.emotionStreak >= this.props.emotionalCertanty && label !== this.state.label) {
+				if (this.jobDetected) {
+					this.jobDetected.stop();
+				}
+
+				const state = {
+					active: true,
+					label,
+					activeImageSrc: this.state.imageSrc,
+					...this.emotionIntepretation(label)
+				};
+				this.setState(state);
+
+				this.jobDetected = new Job(() => {
+					this.setState({active: false});
+				}, this.props.activeTimeout);
+				this.jobDetected.start();
+			}
 		}
 
 		onJoystick = (data) => {
@@ -419,33 +466,39 @@ const Brain = hoc((config, Wrapped) => {
 			return state;
 		}
 
-		visionIntepretation (saw) {
+		interpretation (saw, mapping) {
 			const state = this.resetStateOfAllEmotions();
 			const addItemToState = item => (state[item] = true);
 			const addResponseToState = ({emotion, sound}) => {
 				if (emotion) emotion.forEach(addItemToState);
 				if (sound) this.playSound(sound);
 			};
-
-			if (visionMap[saw]) {
+			if (mapping[saw]) {
 				// Exact matches first
-				addResponseToState(visionMap[saw]);
+				addResponseToState(mapping[saw]);
 			} else {
 				// Interpretative sub-matches
 				console.groupCollapsed('Attempting to identify "' + saw + '".');
-				for (const item in visionMap) {
+				for (const item in mapping) {
 					if (saw.indexOf(item) > -1) {
 						// Huzzah! Partial match.
-						addResponseToState(visionMap[item]);
-						console.log('%cFound a match! "%s" is a %s.', 'color: green', saw, item);
+						addResponseToState(mapping[item]);
+						console.log('%cFound a match! "%s" is %s.', 'color: green', saw, item);
 					} else {
-						console.log('Doesn\'t look like it\'s a', item);
+						console.log('Doesn\'t look like', item);
 					}
 				}
 				console.groupEnd();
 			}
-
 			return state;
+		}
+
+		emotionIntepretation (saw) {
+			return this.interpretation(saw, perceivedEmotionMap);
+		}
+
+		visionIntepretation (saw) {
+			return this.interpretation(saw, visionMap);
 		}
 
 		/**

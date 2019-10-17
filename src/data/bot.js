@@ -5,6 +5,10 @@ import {toCapitalized} from '@enact/i18n/util';
 function noop () {}
 
 const subscribedTopics = {
+	emotions: {
+		name: '/ros_openvino_toolkit/emotions_recognition',
+		messageType: 'people_msgs/EmotionsStamped'
+	},
 	detected: {
 		name: '/object_classifier/output',
 		messageType: 'duckietown_msgs/ClassifiedObject'

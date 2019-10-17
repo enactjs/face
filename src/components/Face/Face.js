@@ -15,7 +15,7 @@ const Eye = kind({
 		className: 'eye'
 	},
 
-	// eslint-disable-next-line
+	// eslint-disable-next-line enact/prop-types
 	render: ({styler, ...rest}) => (
 		<div {...rest}>
 			<div className={styler.join('lid', 'upper')} />
@@ -53,7 +53,7 @@ const Mouth = kind({
 	},
 
 	// <!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In  -->
-	// eslint-disable-next-line
+	// eslint-disable-next-line enact/prop-types
 	render: ({lowerLipTip, upperLipTip, styler, ...rest}) => {
 		delete rest.lowerLip;
 		delete rest.lowerLipResting;
@@ -116,7 +116,7 @@ const Face = kind({
 		}
 	},
 
-	// eslint-disable-next-line
+	// eslint-disable-next-line enact/prop-types
 	render: ({lowerLip, soundSrc, upperLip, styler, ...rest}) => {
 		delete rest.expression;
 		return (
